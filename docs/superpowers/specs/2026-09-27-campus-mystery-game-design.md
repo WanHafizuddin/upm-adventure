@@ -17,6 +17,7 @@ Solo developer project, first serious Unity project (developer is learning Unity
 - **Engine:** Unity
 - **Camera:** 3rd-person 3D (not top-down) — chosen after visual review to match a "White Day"-style realistic school-at-night mood
 - **Art direction:** Stylized-realistic — modular, reusable corridor/room kits (not fully photoreal), moody realistic lighting, muted/desaturated palette. Chosen specifically to get the realistic-horror-adjacent atmosphere without the asset/production burden of full photorealism, which is not appropriate for a solo first project.
+- **Environment asset source:** [3D Free Modular Kit](https://assetstore.unity.com/packages/3d/environments/3d-free-modular-kit-85732) (free, low-poly PBR modular pieces). It's generic/sci-fi-interior themed by default, so walls/floors/props need retexturing and school-appropriate dressing (lockers, signage, classroom furniture, etc.) to read as campus corridors/rooms. Mood is carried mainly by lighting/post-processing (URP volumes, low ambient light, warm key lights, desaturated grade) layered on top of the reskinned kit rather than by the base assets themselves.
 - No stealth/chase/antagonist-AI layer — the "White Day" influence is atmospheric/visual only. Confirmed explicitly: gameplay stays a pure investigation/deduction loop, no patrolling threat to hide from.
 
 ## Player Character
