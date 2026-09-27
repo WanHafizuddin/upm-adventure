@@ -22,18 +22,16 @@
 ### Task 1: Unity Project Setup & Version Control
 
 **Files:**
-- Create: Unity project at repo root `C:\Users\My Pc\OneDrive\Desktop\upm-adventure` (Assets/, Packages/, ProjectSettings/)
+- Create: Unity project at `C:\Users\My Pc\OneDrive\Desktop\upm-adventure\CampusMystery\` (Assets/, Packages/, ProjectSettings/) — a subfolder of the repo, sibling to `docs/`
 - Create: `.gitignore` (extend existing repo-root `.gitignore`)
-- Create: `Assets/_Project/Scripts/Runtime/` (empty, folder placeholder)
-- Create: `Assets/_Project/Scripts/Tests/EditMode/` (empty, folder placeholder)
-- Create: `Assets/_Project/Art/`, `Assets/_Project/Prefabs/`, `Assets/_Project/Scenes/` (empty, folder placeholders)
+- Create: `CampusMystery/Assets/_Project/Scripts/Runtime/` (empty, folder placeholder)
+- Create: `CampusMystery/Assets/_Project/Scripts/Tests/EditMode/` (empty, folder placeholder)
+- Create: `CampusMystery/Assets/_Project/Art/`, `CampusMystery/Assets/_Project/Prefabs/`, `CampusMystery/Assets/_Project/Scenes/` (empty, folder placeholders)
 
 **Interfaces:**
-- Produces: the Unity project itself, which every later task's files live inside.
+- Produces: the Unity project itself, which every later task's files live inside. **Every `Assets/...` path in Tasks 2–10 is relative to this project folder** (`CampusMystery/Assets/...`, not the repo root) — run all later Unity-side file and git operations with `CampusMystery/` as the working directory.
 
-- [ ] **Step 1: Create the Unity project**
-
-  In Unity Hub: **New Project** → template **3D (URP)** → Project name `CampusMystery` → Location `C:\Users\My Pc\OneDrive\Desktop\upm-adventure` (so `Assets/`, `Packages/`, `ProjectSettings/` land at the repo root, alongside `docs/`) → Unity version **6.6 (6000.6.3f1)** → Create.
+- [x] **Step 1: Create the Unity project** — done. Unity Hub created it as `CampusMystery/` (a subfolder), since Hub's "Location" field is the parent directory and Project name becomes the subfolder — this is normal Unity Hub behavior, not an error. Using Unity **6.6 (6000.6.3f1)**, Universal 3D (URP) template.
 
 - [ ] **Step 2: Add Unity-specific ignores to `.gitignore`**
 
@@ -78,8 +76,10 @@
 
 - [ ] **Step 4: Commit**
 
+  Run from the repo root (`C:\Users\My Pc\OneDrive\Desktop\upm-adventure`):
+
   ```bash
-  git add .gitignore Assets ProjectSettings Packages
+  git add .gitignore CampusMystery/Assets CampusMystery/ProjectSettings CampusMystery/Packages
   git commit -m "chore: scaffold Unity project (URP, Unity 6.6)"
   ```
 
