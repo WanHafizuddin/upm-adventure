@@ -4,9 +4,9 @@
 
 **Goal:** Build the Day-1 vertical slice of the campus murder-mystery game — a player can move through one 3D location, talk to one suspect, pick up clues, connect evidence on a deduction board, and see a correct connection unlock new content — proving the full core loop end-to-end before any other days/suspects are built.
 
-**Architecture:** Unity 2022.3 LTS project (URP 3D template). Game logic that can be pure C# (clue tracking, dialogue-choice gating, deduction-link validation, day-completion checking) is written as plain classes + ScriptableObject data and covered by Unity Test Framework EditMode (NUnit) tests. Scene wiring that requires Unity's runtime (player movement/camera, dialogue UI, deduction-board drag UI) is written as MonoBehaviours that call into the tested pure logic, verified with a manual Play Mode checklist instead of automated tests.
+**Architecture:** Unity 6.6 (6000.6.3f1) project (URP 3D template). Game logic that can be pure C# (clue tracking, dialogue-choice gating, deduction-link validation, day-completion checking) is written as plain classes + ScriptableObject data and covered by Unity Test Framework EditMode (NUnit) tests. Scene wiring that requires Unity's runtime (player movement/camera, dialogue UI, deduction-board drag UI) is written as MonoBehaviours that call into the tested pure logic, verified with a manual Play Mode checklist instead of automated tests.
 
-**Tech Stack:** Unity 2022.3 LTS, Universal Render Pipeline (URP), C#, Unity Test Framework (NUnit, EditMode), Unity's built-in UI (uGUI), [3D Free Modular Kit](https://assetstore.unity.com/packages/3d/environments/3d-free-modular-kit-85732) (free environment asset, reskinned).
+**Tech Stack:** Unity 6.6 (6000.6.3f1), Universal Render Pipeline (URP), C#, Unity Test Framework (NUnit, EditMode), Unity's built-in UI (uGUI), [3D Free Modular Kit](https://assetstore.unity.com/packages/3d/environments/3d-free-modular-kit-85732) (free environment asset, reskinned).
 
 ## Global Constraints
 
@@ -33,7 +33,7 @@
 
 - [ ] **Step 1: Create the Unity project**
 
-  In Unity Hub: **New Project** → template **3D (URP)** → Project name `CampusMystery` → Location `C:\Users\My Pc\OneDrive\Desktop\upm-adventure` (so `Assets/`, `Packages/`, `ProjectSettings/` land at the repo root, alongside `docs/`) → Unity version **2022.3 LTS** (latest patch) → Create.
+  In Unity Hub: **New Project** → template **3D (URP)** → Project name `CampusMystery` → Location `C:\Users\My Pc\OneDrive\Desktop\upm-adventure` (so `Assets/`, `Packages/`, `ProjectSettings/` land at the repo root, alongside `docs/`) → Unity version **6.6 (6000.6.3f1)** → Create.
 
 - [ ] **Step 2: Add Unity-specific ignores to `.gitignore`**
 
@@ -80,7 +80,7 @@
 
   ```bash
   git add .gitignore Assets ProjectSettings Packages
-  git commit -m "chore: scaffold Unity project (URP, 2022.3 LTS)"
+  git commit -m "chore: scaffold Unity project (URP, Unity 6.6)"
   ```
 
 ---
