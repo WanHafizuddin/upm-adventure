@@ -4,7 +4,7 @@
 
 A story-driven murder-mystery adventure game set on a fictional university campus visually inspired by Universiti Putra Malaysia (UPM). The player is a student amateur sleuth investigating the death of a lecturer, gathering clues and testimony across a multi-day chapter structure, and using a deduction board to link evidence to suspects and motives before making a final accusation.
 
-Solo developer project, first serious Unity project (developer is learning Unity/C# through this build).
+Solo developer project. The developer's first serious game project.
 
 ## Setting
 
@@ -12,13 +12,28 @@ Solo developer project, first serious Unity project (developer is learning Unity
 - Working title: *Case Files: Serdang Raya* (placeholder, can change).
 - Tone: noir-lite. Murder is discussed and investigated seriously; crime scenes are implied via props/details, not graphic gore.
 
+## Revision History
+
+- **2026-11-13: 3D to 2D.** The developer asked for 2D and left the style to Claude, who picked side-view pixel art. The 3rd-person camera, stylized-realistic 3D art and the "3D Free Modular Kit" are retired.
+- **2026-11-13: Unity to the web.** The same day, the developer dropped Unity and left the technology choice to Claude. The game is now a browser game built with Phaser 4 and TypeScript (see Technology). Unity, C#, ScriptableObjects and the Unity plan are retired. The game design itself (story, loop, systems, endings) is unchanged.
+- **2026-11-13: side-view to top-down.** After seeing the side-view build, the developer asked for a top-down view, pointing to a top-down pixel-art reference: deep blue/purple night palette, warm lantern light, dense foliage, chunky outlined props. Claude made the specific calls below to match that feel with original art. Side-view is retired.
+
+## Technology (Claude's call)
+
+- **Engine:** [Phaser 4](https://phaser.io/) (2D web game framework), written in **TypeScript**, built and served with **Vite**. The game runs in any modern desktop browser and can be published as a static site (itch.io HTML5 upload, GitHub Pages).
+- **Why:** no editor to install or learn, so the developer works in plain code files and a browser. Phaser has strong 2D, pixel-art and arcade-physics support. The finished game is easy to share with a link. Claude can also run and play-test it directly.
+- **UI:** dialogue and the deduction board are HTML overlays on top of the game canvas, not drawn inside Phaser. That gives crisp, readable text and simple drag-and-drop.
+- **Content as data:** dialogue, clues, deduction links and day requirements live in typed TypeScript data files. They take the role ScriptableObjects had in the Unity design. Adding Days 2–5 means mostly adding data, not new code.
+- **Tests:** game rules (inventory, flags, dialogue gating, deduction validation, day completion, interaction picking) are plain TypeScript modules with no Phaser dependency, covered by **Vitest** unit tests. Scenes are checked by play-testing in the browser.
+- **Tooling floor:** Node.js 20.16 (installed), so Vite 6 and Vitest 3. Newer Vite/Vitest majors need Node 20.19+.
+
 ## Visual Style & Perspective
 
-- **Engine:** Unity
-- **Camera:** 3rd-person 3D (not top-down) — chosen after visual review to match a "White Day"-style realistic school-at-night mood
-- **Art direction:** Stylized-realistic — modular, reusable corridor/room kits (not fully photoreal), moody realistic lighting, muted/desaturated palette. Chosen specifically to get the realistic-horror-adjacent atmosphere without the asset/production burden of full photorealism, which is not appropriate for a solo first project.
-- **Environment asset source:** [3D Free Modular Kit](https://assetstore.unity.com/packages/3d/environments/3d-free-modular-kit-85732) (free, low-poly PBR modular pieces). It's generic/sci-fi-interior themed by default, so walls/floors/props need retexturing and school-appropriate dressing (lockers, signage, classroom furniture, etc.) to read as campus corridors/rooms. Mood is carried mainly by lighting/post-processing (URP volumes, low ambient light, warm key lights, desaturated grade) layered on top of the reskinned kit rather than by the base assets themselves.
-- No stealth/chase/antagonist-AI layer — the "White Day" influence is atmospheric/visual only. Confirmed explicitly: gameplay stays a pure investigation/deduction loop, no patrolling threat to hide from.
+- **Camera (developer's call):** Top-down, high-angle (the classic "3/4" view: you see the ground from above and the fronts of buildings, people and props). The player walks in eight directions. The camera follows them and stops at the edges of the current area. Objects further down the screen draw in front of ones higher up, so the player can walk behind trees and lamp posts.
+- **Art direction (developer's reference, Claude's specifics):** Detailed pixel art on a 16 px grid, rendered at 480×270 and scaled up with nearest-neighbour filtering. A rich night palette: indigo and violet ground, deep teal-blue foliage, dark 1 px outlines, and stone and wood that pick up warm highlights. Mood comes from lighting: a dim blue-violet ambient light, warm lantern/lamp-post light pools, lit building windows, and a faint torch around the player. Saturated and atmospheric, not muted-grey.
+- **Environment and character art source (Claude's call):** Original pixel art generated in code (`game/src/art/`): ground, trees, bushes, lamp posts, benches, the faculty building, the fountain, crime-scene tape and characters. No third-party asset pack is needed, so there are no licence questions. A hand-drawn or commissioned pack can replace any piece later without changing game code. All signage uses the fictional campus, never real UPM branding.
+- **Day 1 location (Claude's call):** The faculty courtyard at night: the faculty building along the top, a central dry fountain plaza, stone paths, rain trees and hedges, lamp posts, and a taped-off crime scene by the fountain.
+- No stealth/chase/antagonist-AI layer. The "White Day" influence is atmospheric/visual only. Confirmed explicitly: gameplay stays a pure investigation/deduction loop, with no patrolling threat to hide from.
 
 ## Player Character
 
@@ -38,7 +53,7 @@ Student amateur sleuth — a regular student pulled into the investigation (e.g.
 - **Day 4:** Confrontations with suspects using gathered evidence; deduction board should be largely complete.
 - **Day 5:** Final accusation.
 
-Each day gates which locations, NPCs, and clues are currently accessible; the `ChapterManager` system advances the day once that day's goal flags are met.
+Each day gates which locations, NPCs, and clues are currently accessible; the chapter system advances the day once that day's goal flags are met.
 
 ## Locations
 
@@ -46,21 +61,21 @@ Each day gates which locations, NPCs, and clues are currently accessible; the `C
 
 ## Core Gameplay Loop (per day)
 
-1. Explore currently-unlocked locations (3rd-person 3D movement).
+1. Explore currently-unlocked locations (top-down movement in eight directions; doors and paths lead to other areas).
 2. Talk to NPCs (suspects and witnesses) via a branching dialogue system. Some dialogue lines only unlock once the player already holds a relevant clue.
 3. Pick up or observe clues in the world (physical items, notes, scene details), or receive clues through dialogue.
 4. Open the deduction board: place collected clues and connect them to suspects, motives, and locations.
 5. Correct connections unlock new dialogue, new areas, or progress toward the next day.
 6. On the final day, enough correct connections unlock the accusation scene.
 
-## Systems (Unity / C#)
+## Systems
 
-- **PlayerController** — 3rd-person 3D movement and camera, collision with campus geometry, interaction trigger for NPCs and clue objects.
-- **DialogueSystem** — branching dialogue trees (ScriptableObject-based nodes); key lines set flags (e.g. `HeardAlibi_LecturerX = true`) that gate later content.
-- **ClueInventory** — collectible clues as ScriptableObjects (id, name, description, icon); populated via world pickups and dialogue grants.
-- **DeductionBoard (UI)** — drag-and-connect UI where the player links clue/suspect/motive/location nodes; each valid connection is checked against a predefined solution table, and correct connections set flags that unlock further content.
-- **ChapterManager** — tracks the current day (1–5), gates which locations/NPCs/clues are active, and advances the day when that day's completion flags are met.
-- **AccusationSystem** — end-game scene where the player selects a suspect plus supporting evidence, checked against the solution to route to an ending.
+- **Player** — top-down eight-direction movement at the same speed diagonally as straight, a camera that follows the player and stops at the area's edges, collision with buildings, trees and props (only their footprint at ground level blocks the player), and an interaction check that picks the nearest NPC or clue within reach. An on-screen prompt shows what pressing the interact key will do.
+- **Dialogue** — branching dialogue trees stored as data; key lines set flags (e.g. `heard_alibi_suspect_a`) that gate later content. The dialogue box can be closed.
+- **Clue inventory** — collectible clues stored as data (id, name, description); populated via world pickups and dialogue grants.
+- **Deduction board (UI)** — a full-screen overlay the player opens and closes with a key. It's a drag-and-connect UI where the player links clue/suspect/motive/location nodes. Only clues the player has collected appear on it. Each connection is checked against a predefined solution table, in either drag direction, and correct connections set flags that unlock further content.
+- **Chapters** — tracks the current day (1–5), gates which locations/NPCs/clues are active, and advances the day when that day's completion flags are met.
+- **Accusation** — end-game scene where the player selects a suspect plus supporting evidence, checked against the solution to route to an ending.
 
 ## Endings
 
@@ -71,13 +86,13 @@ Each day gates which locations, NPCs, and clues are currently accessible; the `C
 
 ## Scope Risk & Recommended Build Order
 
-This design (3rd-person 3D + deduction board UI + 4–5 day chapter structure) is a real step up from a minimal first project for a solo developer learning Unity. To manage this:
+This design (side-view 2D + deduction board UI + 4–5 day chapter structure) is a real step up from a minimal first project for a solo developer. Going 2D and web-based lowers the risk on movement, camera, art and tooling, but the dialogue, deduction and chapter systems are the same size as before. To manage this:
 
 1. Build a **vertical slice first**: Day 1 content plus a partial deduction board wired to a single suspect. This proves the full loop end-to-end (movement → dialogue → clue pickup → deduction board → at least one unlock) before writing content for the remaining suspects and days.
-2. Once the vertical slice works, Days 2–5 content is primarily new data (ScriptableObjects: dialogue, clues, solution-table entries) reusing the same systems, not new code — this is what keeps the larger day/suspect count tractable for one person.
+2. Once the vertical slice works, Days 2–5 content is primarily new data (dialogue, clues, solution-table entries) reusing the same systems, not new code — this is what keeps the larger day/suspect count tractable for one person.
 
 ## Testing Approach
 
-- Each system should be testable in relative isolation in the Unity editor (e.g. `ClueInventory` exercised with placeholder clues before the dialogue system exists).
-- After the vertical slice (Day 1 + one suspect + partial board) is done, do a full playtest of one complete loop iteration before building out the remaining days.
+- Every game rule is a plain TypeScript module with Vitest unit tests, so it can be checked without running the game (e.g. the clue inventory is tested before any scene exists).
+- After the vertical slice (Day 1 + one suspect + partial board) is done, do a full playtest of one complete loop iteration in the browser before building out the remaining days.
 - Manual playtest checklist per day: can the player reach every intended clue; can every valid deduction-board connection for that day's content actually be made; does a wrong accusation correctly trigger the bad ending (not a soft-lock).

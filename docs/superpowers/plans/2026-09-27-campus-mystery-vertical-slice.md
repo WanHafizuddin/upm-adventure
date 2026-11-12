@@ -1,21 +1,36 @@
 # Campus Mystery — Day 1 Vertical Slice Implementation Plan
 
+> **SUPERSEDED 2026-11-13.** The project no longer uses Unity. Follow [2026-11-13-campus-mystery-web-vertical-slice.md](2026-11-13-campus-mystery-web-vertical-slice.md) instead. This file is kept only as a record of the Unity approach.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build the Day-1 vertical slice of the campus murder-mystery game — a player can move through one 3D location, talk to one suspect, pick up clues, connect evidence on a deduction board, and see a correct connection unlock new content — proving the full core loop end-to-end before any other days/suspects are built.
+> **Revised 2026-11-13 for side-view 2D.** The spec switched the game from 3rd-person 3D to side-view 2D pixel art. This revision changes Task 1 (new Step 3 converts the project to the URP 2D Renderer), Task 2 and Task 5 (assembly references, Input System UI module), Task 7 (deduction board is now a screen overlay), Task 9 (side-view 2D player and camera) and Task 10 (2D scene, pixel-art reskin). Tasks 3, 4, 6 and 8 are pure logic and did not change. The revision also fixes three problems the 3D version had that would have stopped it working: the project's input setting is "Input System Package (New)" only, so the old `Input.*` calls and `StandaloneInputModule` would throw at runtime; the runtime and editor assemblies did not reference `UnityEngine.UI`, so the dialogue code would not compile; and the board's drag used `OnPointerUp`, which Unity sends to the node where the drag *started*, so no connection could ever be made.
 
-**Architecture:** Unity 6.6 (6000.6.3f1) project (URP 3D template). Game logic that can be pure C# (clue tracking, dialogue-choice gating, deduction-link validation, day-completion checking) is written as plain classes + ScriptableObject data and covered by Unity Test Framework EditMode (NUnit) tests, run headlessly via Unity's batchmode CLI (no Editor GUI needed). Scene wiring that requires Unity's runtime (player movement/camera, dialogue UI, deduction-board drag UI) is written as MonoBehaviours that call into the tested pure logic; the scenes themselves are assembled programmatically by Editor scripts (`Assets/_Project/Scripts/Editor/`, run via `-executeMethod` in batchmode) rather than built by hand in the Editor, so GameObject/component wiring is scripted and reproducible. Only final behavior verification — pressing Play and working through a checklist — stays manual, since that requires a human watching the result.
+**Goal:** Build the Day-1 vertical slice of the campus murder-mystery game — a player can walk through one side-view 2D location, talk to one suspect, pick up clues, connect evidence on a deduction board, and see a correct connection unlock new content — proving the full core loop end-to-end before any other days/suspects are built.
 
-**Tech Stack:** Unity 6.6 (6000.6.3f1), Universal Render Pipeline (URP), C#, Unity Test Framework (NUnit, EditMode), Unity's built-in UI (uGUI), [3D Free Modular Kit](https://assetstore.unity.com/packages/3d/environments/3d-free-modular-kit-85732) (free environment asset, reskinned).
+**Architecture:** Unity 6.6 (6000.6.3f1) project, created from the URP 3D template and converted to the URP 2D Renderer in Task 1. All input goes through the Input System package (`Keyboard.current`, `InputSystemUIInputModule`), because the project's active input handling is the new Input System only. Game logic that can be pure C# (clue tracking, dialogue-choice gating, deduction-link validation, day-completion checking) is written as plain classes + ScriptableObject data and covered by Unity Test Framework EditMode (NUnit) tests, run headlessly via Unity's batchmode CLI (no Editor GUI needed). Scene wiring that requires Unity's runtime (player movement/camera, dialogue UI, deduction-board drag UI) is written as MonoBehaviours that call into the tested pure logic; the scenes themselves are assembled programmatically by Editor scripts (`Assets/_Project/Scripts/Editor/`, run via `-executeMethod` in batchmode) rather than built by hand in the Editor, so GameObject/component wiring is scripted and reproducible. Only final behavior verification — pressing Play and working through a checklist — stays manual, since that requires a human watching the result.
+
+**Tech Stack:** Unity 6.6 (6000.6.3f1), Universal Render Pipeline (URP) with the 2D Renderer and 2D lights, Input System package, C#, Unity Test Framework (NUnit, EditMode), Unity's built-in UI (uGUI), 2D Sprite and 2D Tilemap packages. Placeholder sprites first, then a free pixel-art school/interior pack chosen at reskin time.
+
+**Spec:** [2026-09-27-campus-mystery-game-design.md](../specs/2026-09-27-campus-mystery-game-design.md) (revised 2026-11-13 for side-view 2D).
 
 ## Global Constraints
 
-- Camera/perspective: 3rd-person 3D (not top-down). Source: [2026-09-27-campus-mystery-game-design.md](../specs/2026-09-27-campus-mystery-game-design.md).
-- Art direction: stylized-realistic, moody lighting carries the mood — not photorealism. No stealth/chase/antagonist-AI layer of any kind.
+- Camera/perspective: side-view 2D. Orthographic camera follows the player horizontally, clamped to the room's edges. The player moves left/right only in this slice (no jumping, no vertical movement).
+- Art direction: pixel art, muted/desaturated night palette; mood comes from URP 2D lights (dim cool global light, warm spot lights). No stealth/chase/antagonist-AI layer of any kind.
 - Tone: noir-lite. No graphic gore; crime-scene detail stays implied via props, never shown directly.
 - Setting must use a fictional campus name/branding only — never real UPM names, buildings, or branding, anywhere in code, data, or UI text.
-- Environment art source is the free "3D Free Modular Kit" (generic/sci-fi themed by default) — it must be reskinned (retextured, redressed with school props) to read as a campus corridor/room, not used as-is.
+- Environment art: flat-colored placeholder sprites until Task 10's playtest passes; then a free pixel-art school/interior pack, redressed with fictional campus signage. All sprites import with Point filtering, no compression, 32 pixels per unit.
+- Input: Input System package API only (`UnityEngine.InputSystem`). Never `UnityEngine.Input` or `StandaloneInputModule`. Keys: A/D or Left/Right to walk, E to interact, Tab to open/close the deduction board, Space for the Day-1 debug check.
 - This plan implements **only** the Day-1 vertical slice: one location, one suspect, 2–3 clues, a partial deduction board, ending in at least one unlock. `ChapterManager` (multi-day gating) beyond a single day-completion check, `AccusationSystem` (final ending), the other two suspects, and the remaining locations are explicitly out of scope — they are follow-up plans once this slice is validated.
+
+## Review Focus
+
+- **Two interactables in range when E is pressed** (e.g. a clue lying next to the suspect): only the nearest one should respond. Pinned by `InteractionPickerTests` in Task 9.
+- **Dragging on the board in the "wrong" direction** (suspect onto clue instead of clue onto suspect): it should connect exactly as the other direction does. Pinned by `DeductionBoardLogicTests` in Task 7.
+- **Dropping a drag on empty board space, or back on the node it started from**: no connection, the preview line disappears, no error. Manual checklist in Task 7, Step 7.
+- **Walking into the room's ends**: the player stops at the walls and the camera never shows past the room's edges. Pinned by `CameraBoundsTests` in Task 9, plus the Task 10 checklist.
+- **Walking or interacting while the deduction board is open**: the player must not move or trigger E-interactions behind the open board. Manual checklist in Task 10, Step 5.
 
 ---
 
@@ -27,15 +42,19 @@
 - Create: `CampusMystery/Assets/_Project/Scripts/Runtime/` (empty, folder placeholder)
 - Create: `CampusMystery/Assets/_Project/Scripts/Tests/EditMode/` (empty, folder placeholder)
 - Create: `CampusMystery/Assets/_Project/Art/`, `CampusMystery/Assets/_Project/Prefabs/`, `CampusMystery/Assets/_Project/Scenes/` (empty, folder placeholders)
+- Create: `CampusMystery/Assets/_Project/Setup/Editor/ProjectSetup2D.cs` (one-off 3D-to-2D conversion; it sits in its own `Editor` folder, outside every `.asmdef`, so it compiles into `Assembly-CSharp-Editor`, which already sees all URP assemblies)
+- Create (by the script): `CampusMystery/Assets/Settings/Renderer2D.asset`, `CampusMystery/Assets/Settings/URP_2D.asset`
+- Delete (by the script): `CampusMystery/Assets/Settings/PC_RPAsset.asset`, `PC_Renderer.asset`, `Mobile_RPAsset.asset`, `Mobile_Renderer.asset` (the template's 3D pipeline assets)
+- Modify: `CampusMystery/Packages/manifest.json`, and (by the script) `CampusMystery/ProjectSettings/GraphicsSettings.asset`, `QualitySettings.asset`, `EditorSettings.asset`
 
 **Interfaces:**
 - Produces: the Unity project itself, which every later task's files live inside. **Every `Assets/...` path in Tasks 2–10 is relative to this project folder** (`CampusMystery/Assets/...`, not the repo root) — run all later Unity-side file and git operations with `CampusMystery/` as the working directory.
 
-- [x] **Step 1: Create the Unity project** — done. Unity Hub created it as `CampusMystery/` (a subfolder), since Hub's "Location" field is the parent directory and Project name becomes the subfolder — this is normal Unity Hub behavior, not an error. Using Unity **6.6 (6000.6.3f1)**, Universal 3D (URP) template.
+- [x] **Step 1: Create the Unity project** — done. Unity Hub created it as `CampusMystery/` (a subfolder), since Hub's "Location" field is the parent directory and Project name becomes the subfolder — this is normal Unity Hub behavior, not an error. Using Unity **6.6 (6000.6.3f1)**, Universal 3D (URP) template. The project was created before the switch to 2D. Step 3 converts it, which is simpler than recreating it because nothing custom has been added yet.
 
-- [ ] **Step 2: Add Unity-specific ignores to `.gitignore`**
+- [x] **Step 2: Add Unity-specific ignores to `.gitignore`** — done. Folder rules were anchored to `/CampusMystery/` (so a folder named e.g. `Build` inside `Assets/` is never ignored by accident), and `.vs/` / `.idea/` were added for the Visual Studio and Rider packages. After the change, `git status` lists 71 untracked files under `CampusMystery/` (Assets, Packages, ProjectSettings, `.vsconfig`) instead of ~45,000.
 
-  Append to the existing `.gitignore`:
+  Originally planned rules (kept for reference):
 
   ```
   # Unity
@@ -63,7 +82,68 @@
   crashlytics-build.properties
   ```
 
-- [ ] **Step 3: Create the project folder skeleton**
+- [ ] **Step 3: Convert the project to the URP 2D Renderer**
+
+  Close the Unity Editor first (batchmode can't open a project the Editor has open).
+
+  3a. Add the two built-in 2D packages to `CampusMystery/Packages/manifest.json` `dependencies` (both ship inside the 6000.6.3f1 editor at version `1.0.0`, so no download is needed):
+
+  ```json
+  "com.unity.2d.sprite": "1.0.0",
+  "com.unity.2d.tilemap": "1.0.0",
+  ```
+
+  3b. Write `Assets/_Project/Setup/Editor/ProjectSetup2D.cs`, namespace `CampusMystery.Setup`, `public static class ProjectSetup2D` with `public static void Run()`. This mirrors what URP's own "Create > 2D Renderer" menu does (`Renderer2DMenus.CreateRendererAsset` in the URP package), using only public API:
+
+  ```csharp
+  const string UrpPackage = "Packages/com.unity.render-pipelines.universal";
+
+  var rendererData = ScriptableObject.CreateInstance<Renderer2DData>();
+  AssetDatabase.CreateAsset(rendererData, "Assets/Settings/Renderer2D.asset");
+  ResourceReloader.ReloadAllNullIn(rendererData, UrpPackage);
+  var rendererSO = new SerializedObject(rendererData);   // postProcessData's setter is internal
+  rendererSO.FindProperty("m_PostProcessData").objectReferenceValue =
+      AssetDatabase.LoadAssetAtPath<PostProcessData>(UrpPackage + "/Runtime/Data/PostProcessData.asset");
+  rendererSO.ApplyModifiedPropertiesWithoutUndo();
+
+  var pipeline = UniversalRenderPipelineAsset.Create(rendererData);
+  AssetDatabase.CreateAsset(pipeline, "Assets/Settings/URP_2D.asset");
+
+  GraphicsSettings.defaultRenderPipeline = pipeline;
+  for (int i = 0; i < QualitySettings.names.Length; i++)
+  {
+      QualitySettings.SetQualityLevel(i, false);
+      QualitySettings.renderPipeline = pipeline;
+  }
+  EditorSettings.defaultBehaviorMode = EditorBehaviorMode.Mode2D;
+
+  foreach (var old in new[] { "PC_RPAsset", "PC_Renderer", "Mobile_RPAsset", "Mobile_Renderer" })
+      AssetDatabase.DeleteAsset($"Assets/Settings/{old}.asset");
+
+  AssetDatabase.SaveAssets();
+  Debug.Log("ProjectSetup2D: converted to URP 2D Renderer.");
+  ```
+
+  Usings: `UnityEditor`, `UnityEngine`, `UnityEngine.Rendering`, `UnityEngine.Rendering.Universal`. Leave `SampleScene.unity` and `SampleSceneProfile.asset` alone. They're template leftovers that nothing in this plan uses.
+
+  3c. Run it headlessly:
+
+  ```bash
+  "C:\Program Files\Unity\Hub\Editor\6000.6.3f1\Editor\Unity.exe" -batchmode -nographics -projectPath "C:\Users\My Pc\OneDrive\Desktop\upm-adventure\CampusMystery" -executeMethod CampusMystery.Setup.ProjectSetup2D.Run -quit -logFile "C:\Users\My Pc\OneDrive\Desktop\upm-adventure\CampusMystery\Logs\setup-2d.log"
+  ```
+
+  3d. Verify:
+
+  ```bash
+  grep -i "error\|ProjectSetup2D" "C:\Users\My Pc\OneDrive\Desktop\upm-adventure\CampusMystery\Logs\setup-2d.log"
+  grep "m_DefaultBehaviorMode" CampusMystery/ProjectSettings/EditorSettings.asset
+  grep "guid" CampusMystery/Assets/Settings/URP_2D.asset.meta
+  grep "m_CustomRenderPipeline\|customRenderPipeline" CampusMystery/ProjectSettings/GraphicsSettings.asset CampusMystery/ProjectSettings/QualitySettings.asset
+  ```
+
+  Expected: the `ProjectSetup2D: converted to URP 2D Renderer.` line and no compile/`error` lines in the log; `m_DefaultBehaviorMode: 1`; the `URP_2D.asset.meta` guid appears as `m_CustomRenderPipeline` in GraphicsSettings and as `customRenderPipeline` for both quality levels (`Mobile`, `PC`); the four old `PC_*`/`Mobile_*` assets are gone from `Assets/Settings/`.
+
+- [ ] **Step 4: Create the project folder skeleton**
 
   Inside the Unity Editor's Project window, create:
   - `Assets/_Project/Scripts/Runtime/`
@@ -74,13 +154,13 @@
 
   (Unity ignores empty folders in git; each will get a `.gitkeep`-style file once a real asset lands in it during a later task — no action needed now if they stay empty.)
 
-- [ ] **Step 4: Commit**
+- [ ] **Step 5: Commit**
 
   Run from the repo root (`C:\Users\My Pc\OneDrive\Desktop\upm-adventure`):
 
   ```bash
-  git add .gitignore CampusMystery/Assets CampusMystery/ProjectSettings CampusMystery/Packages
-  git commit -m "chore: scaffold Unity project (URP, Unity 6.6)"
+  git add .gitignore CampusMystery/.vsconfig CampusMystery/Assets CampusMystery/ProjectSettings CampusMystery/Packages
+  git commit -m "chore: scaffold Unity project (URP 2D Renderer, Unity 6.6)"
   ```
 
 ---
@@ -103,7 +183,10 @@
   {
       "name": "CampusMystery.Runtime",
       "rootNamespace": "CampusMystery",
-      "references": [],
+      "references": [
+          "UnityEngine.UI",
+          "Unity.InputSystem"
+      ],
       "includePlatforms": [],
       "excludePlatforms": [],
       "allowUnsafeCode": false,
@@ -753,7 +836,7 @@
 
               var canvasGO = new GameObject("Canvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
               canvasGO.GetComponent<Canvas>().renderMode = RenderMode.ScreenSpaceOverlay;
-              new GameObject("EventSystem", typeof(UnityEngine.EventSystems.EventSystem), typeof(UnityEngine.EventSystems.StandaloneInputModule));
+              new GameObject("EventSystem", typeof(UnityEngine.EventSystems.EventSystem), typeof(UnityEngine.InputSystem.UI.InputSystemUIInputModule));
 
               var font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
 
@@ -828,7 +911,10 @@
       "name": "CampusMystery.Editor",
       "rootNamespace": "CampusMystery.EditorTools",
       "references": [
-          "CampusMystery.Runtime"
+          "CampusMystery.Runtime",
+          "UnityEngine.UI",
+          "Unity.InputSystem",
+          "Unity.RenderPipelines.Universal.Runtime"
       ],
       "includePlatforms": [
           "Editor"
@@ -1082,217 +1168,120 @@
 
 ### Task 7: Deduction Board UI (Scene Wiring)
 
+The board is a full-screen uGUI overlay, opened and closed with Tab. Nodes are UI `Image`s, so the canvas's `GraphicRaycaster` handles pointer events and no physics raycaster is needed.
+
 **Files:**
 - Create: `Assets/_Project/Scripts/Runtime/Deduction/DeductionBoardController.cs`
+- Create: `Assets/_Project/Scripts/Runtime/Deduction/DeductionNodeView.cs` (its own file: Unity only serializes a `MonoBehaviour` in a scene if its class name matches its file name)
+- Create: `Assets/_Project/Scripts/Runtime/Deduction/DeductionBoardToggle.cs`
 - Create: `Assets/_Project/Scripts/Runtime/Deduction/DeductionBoardTestBootstrap.cs`
+- Create: `Assets/_Project/Scripts/Tests/EditMode/DeductionBoardLogicTests.cs`
+- Create: `Assets/_Project/Scripts/Editor/BoardUIBuilder.cs` (shared with Task 10)
 - Create: `Assets/_Project/Scripts/Editor/DeductionBoardTestSceneBuilder.cs`
-- Create (by the script, not by hand): `Assets/_Project/Scenes/DeductionBoardTest.unity` (temporary scratch scene for manual verification)
+- Create (by the script, not by hand): `Assets/_Project/Scenes/DeductionBoardTest.unity`, `Assets/_Project/Art/Data/Test/DeductionBoardTest_Solution.asset`
 
 **Interfaces:**
-- Consumes: `DeductionValidator.TryConnect` (Task 6), `DialogueFlags.Set` (Task 4).
-- Produces: a working drag-and-connect UI that calls `DeductionValidator` and writes unlocked flags into `DialogueFlags` — this is what Task 10 wires into the full scene.
+- Consumes: `DeductionValidator.TryConnect(string clueId, string targetId) : ConnectionResult` and `DeductionSolutionTable`/`DeductionLink` (Task 6); `DialogueFlags.Set(string flagId, bool value = true)` (Task 4).
+- Produces:
+  - `DeductionBoardController : MonoBehaviour` with `[SerializeField] RectTransform dragLine` and:
+    - `void Initialize(DeductionValidator validator, DialogueFlags flags)`
+    - `void BeginDrag(DeductionNodeView source)`
+    - `void UpdateDrag(Vector2 screenPosition)`
+    - `void CompleteDrop(DeductionNodeView target)`
+    - `void EndDrag()`
+    - `static ConnectionResult TryConnectEitherOrder(DeductionValidator validator, string nodeA, string nodeB)`
+  - `DeductionNodeView : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IDropHandler` with `public string NodeId`, `[SerializeField] DeductionBoardController board`, `[SerializeField] Image nodeImage`, `void MarkConnected()`.
+  - `DeductionBoardToggle : MonoBehaviour` with `[SerializeField] GameObject boardPanel`, `[SerializeField] Behaviour[] disableWhileOpen`, `[SerializeField] bool startOpen`, `bool IsOpen { get; }`, `void SetOpen(bool open)`.
+  - `BoardUIBuilder.Build(params BoardNodeSpec[] nodes) : DeductionBoardController` (Editor), where `public struct BoardNodeSpec { public string NodeId; public string Label; public Vector2 Position; }`. Task 10 reuses this.
 
-- [ ] **Step 1: Write the board controller**
+- [ ] **Step 1: Write the failing tests**
 
-  `Assets/_Project/Scripts/Runtime/Deduction/DeductionBoardController.cs`:
+  `Assets/_Project/Scripts/Tests/EditMode/DeductionBoardLogicTests.cs`, namespace `CampusMystery.Tests`. Shared setup: a `DeductionSolutionTable` with one link `{ clueId = "torn_note", targetId = "suspect_a", targetType = "Suspect", unlockFlags = { "linked_note_to_suspect_a" } }`, wrapped in a new `DeductionValidator`.
 
   ```csharp
-  using UnityEngine;
-  using UnityEngine.EventSystems;
-  using CampusMystery.Dialogue;
-
-  namespace CampusMystery.Deduction
+  [Test]
+  public void TryConnectEitherOrder_ClueOntoSuspect_Connects()
   {
-      public class DeductionBoardController : MonoBehaviour
-      {
-          [SerializeField] private LineRenderer dragLinePreview;
+      var result = DeductionBoardController.TryConnectEitherOrder(MakeValidator(), "torn_note", "suspect_a");
+      Assert.IsTrue(result.IsValid);
+      CollectionAssert.AreEqual(new[] { "linked_note_to_suspect_a" }, result.UnlockedFlags);
+  }
 
-          private DeductionValidator _validator;
-          private DialogueFlags _flags;
-          private DeductionNodeView _dragSource;
+  [Test]
+  public void TryConnectEitherOrder_SuspectOntoClue_Connects()
+  {
+      var result = DeductionBoardController.TryConnectEitherOrder(MakeValidator(), "suspect_a", "torn_note");
+      Assert.IsTrue(result.IsValid);
+      CollectionAssert.AreEqual(new[] { "linked_note_to_suspect_a" }, result.UnlockedFlags);
+  }
 
-          public void Initialize(DeductionValidator validator, DialogueFlags flags)
-          {
-              _validator = validator;
-              _flags = flags;
-          }
-
-          public void BeginDrag(DeductionNodeView source)
-          {
-              _dragSource = source;
-              dragLinePreview.positionCount = 2;
-              dragLinePreview.enabled = true;
-          }
-
-          public void UpdateDrag(Vector3 worldPosition)
-          {
-              if (_dragSource == null) return;
-              dragLinePreview.SetPosition(0, _dragSource.transform.position);
-              dragLinePreview.SetPosition(1, worldPosition);
-          }
-
-          public void EndDrag(DeductionNodeView target)
-          {
-              dragLinePreview.enabled = false;
-              if (_dragSource == null || target == null || target == _dragSource)
-              {
-                  _dragSource = null;
-                  return;
-              }
-
-              var result = _validator.TryConnect(_dragSource.NodeId, target.NodeId);
-              if (result.IsValid)
-              {
-                  foreach (var flag in result.UnlockedFlags)
-                  {
-                      _flags.Set(flag);
-                  }
-                  target.MarkConnected();
-                  _dragSource.MarkConnected();
-              }
-
-              _dragSource = null;
-          }
-      }
-
-      public class DeductionNodeView : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
-      {
-          public string NodeId;
-          [SerializeField] private DeductionBoardController board;
-          [SerializeField] private Renderer nodeRenderer;
-
-          public void OnPointerDown(PointerEventData eventData)
-          {
-              board.BeginDrag(this);
-          }
-
-          public void OnPointerUp(PointerEventData eventData)
-          {
-              board.EndDrag(this);
-          }
-
-          public void MarkConnected()
-          {
-              if (nodeRenderer != null) nodeRenderer.material.color = Color.green;
-          }
-      }
+  [Test]
+  public void TryConnectEitherOrder_UnrelatedPair_IsRejected()
+  {
+      var result = DeductionBoardController.TryConnectEitherOrder(MakeValidator(), "torn_note", "suspect_b");
+      Assert.IsFalse(result.IsValid);
+      Assert.IsEmpty(result.UnlockedFlags);
   }
   ```
 
-- [ ] **Step 2: Write a runtime bootstrap for the test scene**
+- [ ] **Step 2: Run the tests to verify they fail**
 
-  `Assets/_Project/Scripts/Runtime/Deduction/DeductionBoardTestBootstrap.cs`:
+  Run the EditMode test command from Task 2 Step 4. Expected: the run fails to compile, and the Unity log has a `CS0103` error saying the name `DeductionBoardController` does not exist.
 
-  ```csharp
-  using UnityEngine;
-  using CampusMystery.Dialogue;
+- [ ] **Step 3: Implement the board scripts**
 
-  namespace CampusMystery.Deduction
-  {
-      public class DeductionBoardTestBootstrap : MonoBehaviour
-      {
-          [SerializeField] private DeductionBoardController board;
-          [SerializeField] private DeductionSolutionTable solutionTable;
+  `DeductionBoardController` (namespace `CampusMystery.Deduction`):
+  - `TryConnectEitherOrder`: call `validator.TryConnect(nodeA, nodeB)`; if that isn't valid, return `validator.TryConnect(nodeB, nodeA)`. The player can drag either way, but the solution table stores links clue-first.
+  - `BeginDrag`: remember the source, show `dragLine`, call `UpdateDrag` with the source's position.
+  - `UpdateDrag`: the canvas is Screen Space – Overlay, so a UI element's `transform.position` is already in screen pixels. Stretch the line from the source to the pointer:
 
-          private void Awake()
-          {
-              board.Initialize(new DeductionValidator(solutionTable), new DialogueFlags());
-          }
-      }
-  }
-  ```
+    ```csharp
+    Vector2 start = _dragSource.transform.position;
+    Vector2 delta = screenPosition - start;
+    dragLine.position = start + delta * 0.5f;
+    dragLine.sizeDelta = new Vector2(delta.magnitude / dragLine.lossyScale.x, 4f);
+    dragLine.rotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg);
+    ```
 
-- [ ] **Step 3: Write an Editor script that builds the test scene**
+  - `CompleteDrop(target)`: if there's no source, or `target == source`, do nothing. Otherwise call `TryConnectEitherOrder(_validator, source.NodeId, target.NodeId)`. If it's valid, `_flags.Set` each unlocked flag and `MarkConnected()` both nodes.
+  - `EndDrag`: hide `dragLine` and clear the source. Unity's UI input module sends `OnDrop` to the node under the pointer *before* it sends `OnEndDrag` to the node the drag started on, so the connection is already decided by the time `EndDrag` runs.
 
-  This goes in the same `Assets/_Project/Scripts/Editor/` folder as Task 5's `DialogueTestSceneBuilder` — it's covered by the `CampusMystery.Editor.asmdef` Task 5 already created; no new asmdef needed.
+  `DeductionNodeView`: `OnBeginDrag` → `board.BeginDrag(this)`, `OnDrag` → `board.UpdateDrag(eventData.position)`, `OnDrop` → `board.CompleteDrop(this)`, `OnEndDrag` → `board.EndDrag()`. `MarkConnected` sets `nodeImage.color = Color.green`.
 
-  `Assets/_Project/Scripts/Editor/DeductionBoardTestSceneBuilder.cs`:
+  `DeductionBoardToggle`: in `Start`, call `SetOpen(startOpen)`. In `Update`, if `Keyboard.current != null && Keyboard.current.tabKey.wasPressedThisFrame`, call `SetOpen(!IsOpen)`. `SetOpen` activates/deactivates `boardPanel` and sets every entry in `disableWhileOpen` to `enabled = !open`. This component must live on an object that is always active, never on the panel itself.
 
-  ```csharp
-  using System.Collections.Generic;
-  using System.IO;
-  using UnityEditor;
-  using UnityEditor.SceneManagement;
-  using UnityEngine;
-  using UnityEngine.EventSystems;
-  using CampusMystery.Deduction;
+  `DeductionBoardTestBootstrap`: unchanged from the original plan. It holds `[SerializeField] DeductionBoardController board` and `[SerializeField] DeductionSolutionTable solutionTable`, and in `Awake` calls `board.Initialize(new DeductionValidator(solutionTable), new DialogueFlags())`.
 
-  namespace CampusMystery.EditorTools
-  {
-      public static class DeductionBoardTestSceneBuilder
-      {
-          public static void Build()
-          {
-              var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+- [ ] **Step 4: Run the tests to verify they pass**
 
-              Directory.CreateDirectory("Assets/_Project/Art/Data/Test");
-              var table = ScriptableObject.CreateInstance<DeductionSolutionTable>();
-              table.validLinks = new List<DeductionLink>
-              {
-                  new DeductionLink
-                  {
-                      clueId = "torn_note",
-                      targetId = "suspect_a",
-                      targetType = "Suspect",
-                      unlockFlags = new List<string> { "linked_note_to_suspect_a" }
-                  }
-              };
-              AssetDatabase.CreateAsset(table, "Assets/_Project/Art/Data/Test/DeductionBoardTest_Solution.asset");
-              AssetDatabase.SaveAssets();
+  Same command. Expected: all tests pass, including the 3 new ones.
 
-              var cameraGO = new GameObject("Main Camera", typeof(Camera), typeof(PhysicsRaycaster));
-              cameraGO.tag = "MainCamera";
-              cameraGO.transform.position = new Vector3(0, 0, -10);
-              new GameObject("EventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
+- [ ] **Step 5: Write the shared board builder and the test-scene builder**
 
-              var boardGO = new GameObject("DeductionBoardController", typeof(DeductionBoardController));
-              var lineGO = new GameObject("DragLinePreview", typeof(LineRenderer));
-              lineGO.transform.SetParent(boardGO.transform);
-              var board = boardGO.GetComponent<DeductionBoardController>();
-              var boardSO = new SerializedObject(board);
-              boardSO.FindProperty("dragLinePreview").objectReferenceValue = lineGO.GetComponent<LineRenderer>();
-              boardSO.ApplyModifiedPropertiesWithoutUndo();
+  `Assets/_Project/Scripts/Editor/BoardUIBuilder.cs`, `Build(params BoardNodeSpec[] nodes)` creates:
 
-              CreateNode("torn_note", new Vector3(-2, 0, 0), board);
-              CreateNode("suspect_a", new Vector3(2, 0, 0), board);
-              CreateNode("suspect_b", new Vector3(0, 2, 0), board);
+  | Object | Components / settings |
+  |---|---|
+  | `DeductionBoardCanvas` | `Canvas` (Screen Space – Overlay, `sortingOrder = 10` so it sits above the dialogue canvas), `CanvasScaler`, `GraphicRaycaster` |
+  | `BoardPanel` (child) | `Image`, stretched to fill the canvas, color `(0.08, 0.08, 0.10, 0.92)`; `DeductionBoardController` |
+  | one `Node_<NodeId>` per spec (child of panel) | `Image` 180×60, color `(0.35, 0.35, 0.4)`, `anchoredPosition = spec.Position`; `DeductionNodeView` with `NodeId`, `board`, `nodeImage` wired; child `Label` `Text` (`LegacyRuntime.ttf`, centered, white, `raycastTarget = false`) showing `spec.Label` |
+  | `DragLine` (child of panel, created last so it draws on top) | `Image`, white, pivot `(0.5, 0.5)`, `raycastTarget = false` (otherwise the drop lands on the line instead of the node), inactive; wired to the controller's `dragLine` |
 
-              var bootstrapGO = new GameObject("DeductionBoardTestBootstrap", typeof(DeductionBoardTestBootstrap));
-              var bootstrapSO = new SerializedObject(bootstrapGO.GetComponent<DeductionBoardTestBootstrap>());
-              bootstrapSO.FindProperty("board").objectReferenceValue = board;
-              bootstrapSO.FindProperty("solutionTable").objectReferenceValue = table;
-              bootstrapSO.ApplyModifiedPropertiesWithoutUndo();
+  It returns the `DeductionBoardController`. `controller.gameObject` is the panel that `DeductionBoardToggle.boardPanel` opens and closes.
 
-              Directory.CreateDirectory("Assets/_Project/Scenes");
-              EditorSceneManager.SaveScene(scene, "Assets/_Project/Scenes/DeductionBoardTest.unity");
-              Debug.Log("DeductionBoardTest.unity built successfully.");
-          }
+  `Assets/_Project/Scripts/Editor/DeductionBoardTestSceneBuilder.cs`, `public static void Build()`:
+  - New empty scene. Create and save the solution table asset at `Assets/_Project/Art/Data/Test/DeductionBoardTest_Solution.asset` with the same single link as the tests.
+  - `Main Camera`: `Camera` (orthographic, background `(0.05, 0.05, 0.08)`), tag `MainCamera`, position `(0, 0, -10)`.
+  - `EventSystem`: `EventSystem` + `UnityEngine.InputSystem.UI.InputSystemUIInputModule`.
+  - `BoardUIBuilder.Build` with `torn_note`/"Torn Note" at `(-250, 0)`, `suspect_a`/"Suspect A" at `(250, 0)`, `suspect_b`/"Suspect B" at `(0, 200)`. The panel stays open (no toggle in this scene).
+  - `DeductionBoardTestBootstrap` wired to the controller and the table.
+  - Save to `Assets/_Project/Scenes/DeductionBoardTest.unity`; log `DeductionBoardTest.unity built successfully.`
 
-          private static void CreateNode(string nodeId, Vector3 position, DeductionBoardController board)
-          {
-              var nodeGO = GameObject.CreatePrimitive(PrimitiveType.Cube);
-              nodeGO.name = $"Node_{nodeId}";
-              nodeGO.transform.position = position;
-              var view = nodeGO.AddComponent<DeductionNodeView>();
-              view.NodeId = nodeId;
-              var viewSO = new SerializedObject(view);
-              viewSO.FindProperty("board").objectReferenceValue = board;
-              viewSO.FindProperty("nodeRenderer").objectReferenceValue = nodeGO.GetComponent<Renderer>();
-              viewSO.ApplyModifiedPropertiesWithoutUndo();
-          }
-      }
-  }
-  ```
-
-  Note: `CreateNode`'s 3D cubes rely on their default `BoxCollider` (added automatically by `CreatePrimitive`) plus the scene's `PhysicsRaycaster`/`EventSystem` for `IPointerDownHandler`/`IPointerUpHandler` to fire — this is why both are created in `Build()` above.
-
-- [ ] **Step 4: Run the builder headlessly**
+- [ ] **Step 6: Run the builder headlessly**
 
   ```bash
   "C:\Program Files\Unity\Hub\Editor\6000.6.3f1\Editor\Unity.exe" -batchmode -nographics -projectPath "C:\Users\My Pc\OneDrive\Desktop\upm-adventure\CampusMystery" -executeMethod CampusMystery.EditorTools.DeductionBoardTestSceneBuilder.Build -quit -logFile "C:\Users\My Pc\OneDrive\Desktop\upm-adventure\CampusMystery\Logs\deduction-scene-build.log"
   ```
-
-  Check the log:
 
   ```bash
   grep -i "error\|built successfully" "C:\Users\My Pc\OneDrive\Desktop\upm-adventure\CampusMystery\Logs\deduction-scene-build.log"
@@ -1300,18 +1289,21 @@
 
   Expected: `DeductionBoardTest.unity built successfully.` present, no `error` lines.
 
-- [ ] **Step 5: Manual playtest checklist**
+- [ ] **Step 7: Manual playtest checklist**
 
   Open `Assets/_Project/Scenes/DeductionBoardTest.unity` in the Unity Editor and press Play:
-  - [ ] Clicking-and-dragging from the `torn_note` cube to the `suspect_a` cube turns both green (valid connection).
-  - [ ] Dragging from `torn_note` to `suspect_b` does **not** turn them green (invalid connection, silently rejected).
-  - [ ] Repeating the same valid drag a second time does not throw an error (idempotent, per `DeductionValidatorTests.TryConnect_SamePairTwice_SecondTimeReturnsInvalid`).
+  - [ ] While dragging from any node, a white line follows the pointer from that node.
+  - [ ] Dragging from "Torn Note" and releasing on "Suspect A" turns both green.
+  - [ ] Restart Play. Dragging from "Suspect A" and releasing on "Torn Note" also turns both green.
+  - [ ] Dragging from "Torn Note" to "Suspect B" does **not** turn them green.
+  - [ ] Releasing on empty board space, or back on the starting node, hides the line, connects nothing, and logs no error.
+  - [ ] Repeating the valid drag a second time logs no error.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 8: Commit**
 
   ```bash
   git add Assets/_Project/Scripts Assets/_Project/Scenes Assets/_Project/Art
-  git commit -m "feat: add deduction board drag-and-connect UI"
+  git commit -m "feat: add deduction board overlay with drag-and-connect"
   ```
 
 ---
@@ -1451,212 +1443,128 @@
 
 ---
 
-### Task 9: Player Controller (Scene Wiring)
+### Task 9: Side-View Player & Camera (Scene Wiring)
 
 **Files:**
-- Create: `Assets/_Project/Scripts/Runtime/Player/PlayerController.cs`
+- Create: `Assets/_Project/Scripts/Runtime/Player/InteractionPicker.cs` (pure)
+- Create: `Assets/_Project/Scripts/Runtime/Player/CameraFollow2D.cs`
+- Create: `Assets/_Project/Scripts/Runtime/Player/PlayerController2D.cs`
 - Create: `Assets/_Project/Scripts/Runtime/Player/InteractionTrigger.cs`
 - Create: `Assets/_Project/Scripts/Runtime/Player/InteractLogger.cs`
+- Create: `Assets/_Project/Scripts/Tests/EditMode/InteractionPickerTests.cs`
+- Create: `Assets/_Project/Scripts/Tests/EditMode/CameraBoundsTests.cs`
+- Create: `Assets/_Project/Scripts/Editor/PlaceholderSprites.cs` (shared with Task 10)
+- Create: `Assets/_Project/Scripts/Editor/EditorLayers.cs` (shared with Task 10)
 - Create: `Assets/_Project/Scripts/Editor/PlayerTestSceneBuilder.cs`
-- Create (by the script, not by hand): `Assets/_Project/Scenes/PlayerTest.unity`, `ProjectSettings/TagManager.asset` update (adds the "Interactable" layer)
+- Create (by the scripts, not by hand): `Assets/_Project/Art/Placeholder/WhiteSquare.png`, `Assets/_Project/Scenes/PlayerTest.unity`, and an "Interactable" layer in `ProjectSettings/TagManager.asset`
 
 **Interfaces:**
-- Produces: 3rd-person movement + camera-relative input, and an `InteractionTrigger` component that any NPC/clue object can carry to respond to player "interact" input. Task 10 places this on the player prefab and wires `InteractionTrigger`s to `DialogueRunner.StartDialogue` and `ClueInventory.AddClue`.
+- Produces:
+  - `static class InteractionPicker` (namespace `CampusMystery.Player`): `static int PickNearest(Vector2 origin, IReadOnlyList<Vector2> candidates)`. Returns the index of the closest candidate, the first one on a tie, or `-1` for an empty list.
+  - `CameraFollow2D : MonoBehaviour` with `[SerializeField] Transform target`, `[SerializeField] float minX`, `[SerializeField] float maxX`, and `static float ClampX(float targetX, float minX, float maxX, float halfViewWidth)`.
+  - `PlayerController2D : MonoBehaviour`, `[RequireComponent(typeof(Rigidbody2D))]`, with `[SerializeField] float moveSpeed = 4f`, `[SerializeField] float interactRadius = 1.2f`, `[SerializeField] LayerMask interactableLayer`, `[SerializeField] SpriteRenderer bodySprite`.
+  - `InteractionTrigger : MonoBehaviour` with `[SerializeField] UnityEvent onInteract`, `UnityEvent OnInteractEvent { get; }` and `void Interact()`. Same as the original plan. Task 10 wires these to `SuspectATrigger.Interact` and `CluePickup.Interact`.
+  - `InteractLogger : MonoBehaviour` with `void LogInteracted()` that logs `Interacted!`. It's a test-only listener target, because `UnityEvent` persistent listeners need a method on a `MonoBehaviour`.
+  - Editor: `PlaceholderSprites.WhiteSquare() : Sprite` and `EditorLayers.Ensure(string layerName) : int`.
 
-- [ ] **Step 1: Write the player controller**
+- [ ] **Step 1: Write the failing tests**
 
-  `Assets/_Project/Scripts/Runtime/Player/PlayerController.cs`:
+  `Assets/_Project/Scripts/Tests/EditMode/InteractionPickerTests.cs`:
 
   ```csharp
-  using UnityEngine;
-
-  namespace CampusMystery.Player
+  [Test]
+  public void PickNearest_NoCandidates_ReturnsMinusOne()
   {
-      [RequireComponent(typeof(CharacterController))]
-      public class PlayerController : MonoBehaviour
-      {
-          [SerializeField] private float moveSpeed = 4f;
-          [SerializeField] private float rotationSpeed = 10f;
-          [SerializeField] private Transform cameraTransform;
-          [SerializeField] private float interactRadius = 1.5f;
-          [SerializeField] private LayerMask interactableLayer;
+      Assert.AreEqual(-1, InteractionPicker.PickNearest(Vector2.zero, new List<Vector2>()));
+  }
 
-          private CharacterController _controller;
+  [Test]
+  public void PickNearest_TwoInRange_ReturnsCloserOne()
+  {
+      var candidates = new List<Vector2> { new Vector2(1.2f, 0f), new Vector2(0.5f, 0f) };
+      Assert.AreEqual(1, InteractionPicker.PickNearest(Vector2.zero, candidates));
+  }
 
-          private void Awake()
-          {
-              _controller = GetComponent<CharacterController>();
-          }
-
-          private void Update()
-          {
-              HandleMovement();
-              HandleInteract();
-          }
-
-          private void HandleMovement()
-          {
-              float h = Input.GetAxisRaw("Horizontal");
-              float v = Input.GetAxisRaw("Vertical");
-              Vector3 inputDir = new Vector3(h, 0f, v).normalized;
-              if (inputDir.sqrMagnitude < 0.0001f) return;
-
-              Vector3 forward = cameraTransform.forward; forward.y = 0f; forward.Normalize();
-              Vector3 right = cameraTransform.right; right.y = 0f; right.Normalize();
-              Vector3 moveDir = (forward * inputDir.z + right * inputDir.x).normalized;
-
-              _controller.SimpleMove(moveDir * moveSpeed);
-
-              Quaternion targetRotation = Quaternion.LookRotation(moveDir, Vector3.up);
-              transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
-          }
-
-          private void HandleInteract()
-          {
-              if (!Input.GetKeyDown(KeyCode.E)) return;
-
-              var hits = Physics.OverlapSphere(transform.position, interactRadius, interactableLayer);
-              foreach (var hit in hits)
-              {
-                  var trigger = hit.GetComponent<InteractionTrigger>();
-                  if (trigger != null)
-                  {
-                      trigger.Interact();
-                      break;
-                  }
-              }
-          }
-      }
+  [Test]
+  public void PickNearest_Tie_ReturnsFirst()
+  {
+      var candidates = new List<Vector2> { new Vector2(-1f, 0f), new Vector2(1f, 0f) };
+      Assert.AreEqual(0, InteractionPicker.PickNearest(Vector2.zero, candidates));
   }
   ```
 
-  `Assets/_Project/Scripts/Runtime/Player/InteractionTrigger.cs`:
+  `Assets/_Project/Scripts/Tests/EditMode/CameraBoundsTests.cs` (a room from x = -15 to 15, half view width 8.9, which is orthographic size 5 at 16:9):
 
   ```csharp
-  using UnityEngine;
-  using UnityEngine.Events;
-
-  namespace CampusMystery.Player
+  [Test]
+  public void ClampX_InsideRoom_FollowsTarget()
   {
-      public class InteractionTrigger : MonoBehaviour
-      {
-          [SerializeField] private UnityEvent onInteract;
+      Assert.AreEqual(5f, CameraFollow2D.ClampX(5f, -15f, 15f, 8.9f), 0.001f);
+  }
 
-          public UnityEvent OnInteractEvent => onInteract;
+  [Test]
+  public void ClampX_NearLeftWall_StopsAtRoomEdge()
+  {
+      Assert.AreEqual(-6.1f, CameraFollow2D.ClampX(-14f, -15f, 15f, 8.9f), 0.001f);
+  }
 
-          public void Interact()
-          {
-              onInteract?.Invoke();
-          }
-      }
+  [Test]
+  public void ClampX_NearRightWall_StopsAtRoomEdge()
+  {
+      Assert.AreEqual(6.1f, CameraFollow2D.ClampX(14f, -15f, 15f, 8.9f), 0.001f);
+  }
+
+  [Test]
+  public void ClampX_RoomNarrowerThanView_CentersOnRoom()
+  {
+      Assert.AreEqual(1f, CameraFollow2D.ClampX(0f, -3f, 5f, 8.9f), 0.001f);
   }
   ```
 
-  `Assets/_Project/Scripts/Runtime/Player/InteractLogger.cs` (a tiny test-only helper — `UnityEvent` persistent listeners need a target method on a `MonoBehaviour`, and `Debug.Log` isn't one):
+- [ ] **Step 2: Run the tests to verify they fail**
 
-  ```csharp
-  using UnityEngine;
+  Run the EditMode test command from Task 2 Step 4. Expected: the run fails to compile, and the Unity log has `CS0103` errors for `InteractionPicker` and `CameraFollow2D`.
 
-  namespace CampusMystery.Player
-  {
-      public class InteractLogger : MonoBehaviour
-      {
-          public void LogInteracted()
-          {
-              Debug.Log("Interacted!");
-          }
-      }
-  }
-  ```
+- [ ] **Step 3: Implement the player scripts**
 
-- [ ] **Step 2: Write an Editor script that builds the test scene**
+  - `InteractionPicker.PickNearest`: compare squared distances. Only a strictly smaller distance replaces the current best, so a tie keeps the first.
+  - `CameraFollow2D.ClampX`: if `maxX - minX <= 2 * halfViewWidth`, return `(minX + maxX) / 2`. Otherwise clamp `targetX` to `[minX + halfViewWidth, maxX - halfViewWidth]`. `LateUpdate` sets the camera's x to `ClampX(target.position.x, minX, maxX, cam.orthographicSize * cam.aspect)` and keeps its y and z.
+  - `PlayerController2D`:
+    - `Awake`: cache the `Rigidbody2D`.
+    - `Update`: read `Keyboard.current`, and do nothing if it's `null`. Horizontal input is −1 for A/Left Arrow, +1 for D/Right Arrow, 0 for neither or both. When input ≠ 0, set `bodySprite.flipX = input < 0`. When `eKey.wasPressedThisFrame`, call `Physics2D.OverlapCircle(position, interactRadius, filter, results)`, where `filter` is a `ContactFilter2D` with `SetLayerMask(interactableLayer)` and `useTriggers = true` (interactables use trigger colliders, so the player walks through them). Collect the hits that have an `InteractionTrigger`, call `InteractionPicker.PickNearest` on their positions, and call `Interact()` on the winner only.
+    - `FixedUpdate`: `rb.linearVelocity = new Vector2(input * moveSpeed, 0f)`.
+    - `OnDisable`: `rb.linearVelocity = Vector2.zero`, so the player doesn't keep sliding when the deduction board disables this component.
+  - `InteractionTrigger` and `InteractLogger`: as described in Interfaces.
 
-  This goes in the same `Assets/_Project/Scripts/Editor/` folder as Task 5's `DialogueTestSceneBuilder`, covered by the same `CampusMystery.Editor.asmdef`; no new asmdef needed.
+- [ ] **Step 4: Run the tests to verify they pass**
 
-  `Assets/_Project/Scripts/Editor/PlayerTestSceneBuilder.cs`:
+  Same command. Expected: all tests pass, including the 7 new ones.
 
-  ```csharp
-  using UnityEditor;
-  using UnityEditor.Events;
-  using UnityEditor.SceneManagement;
-  using UnityEngine;
-  using CampusMystery.Player;
+- [ ] **Step 5: Write the shared editor helpers**
 
-  namespace CampusMystery.EditorTools
-  {
-      public static class PlayerTestSceneBuilder
-      {
-          public static void Build()
-          {
-              var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+  - `PlaceholderSprites.WhiteSquare()`: if `Assets/_Project/Art/Placeholder/WhiteSquare.png` doesn't exist, write a 32×32 all-white PNG there (`Texture2D.EncodeToPNG`) and import it. Then set its `TextureImporter` to `textureType = Sprite`, `spritePixelsPerUnit = 32` (so one sprite is 1×1 world unit), `filterMode = Point`, `textureCompression = Uncompressed`, and reimport. Return the `Sprite` loaded from that path. Every placeholder object uses this sprite, sized with `transform.localScale` and colored with `SpriteRenderer.color`.
+  - `EditorLayers.Ensure(layerName)`: the same body as the original plan's `EnsureLayer`. Return the existing layer if there is one, otherwise write the name into the first empty user layer slot (8 and up) of `ProjectSettings/TagManager.asset` and return that index. Throw if there's no free slot.
 
-              int interactableLayer = EnsureLayer("Interactable");
+- [ ] **Step 6: Write the test-scene builder**
 
-              var playerGO = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-              playerGO.name = "Player";
-              Object.DestroyImmediate(playerGO.GetComponent<CapsuleCollider>());
-              playerGO.AddComponent<CharacterController>();
-              var playerController = playerGO.AddComponent<PlayerController>();
+  `Assets/_Project/Scripts/Editor/PlayerTestSceneBuilder.cs`, `public static void Build()`. New empty scene, then create:
 
-              var cameraGO = new GameObject("Main Camera", typeof(Camera));
-              cameraGO.tag = "MainCamera";
-              cameraGO.transform.SetParent(playerGO.transform);
-              cameraGO.transform.localPosition = new Vector3(0f, 3f, -6f);
-              cameraGO.transform.localRotation = Quaternion.Euler(25f, 0f, 0f);
+  | Object | Position | Scale | Components / settings |
+  |---|---|---|---|
+  | `Floor` | (0, -2) | (30, 1) | `SpriteRenderer` (white square, color `(0.25, 0.25, 0.28)`), `BoxCollider2D` |
+  | `Wall_Left` / `Wall_Right` | (∓15.5, 0.5) | (1, 6) | `SpriteRenderer` (color `(0.18, 0.18, 0.2)`), `BoxCollider2D` |
+  | `Player` | (-8, -0.55) | (0.8, 1.8) | `SpriteRenderer` (color `(0.85, 0.85, 0.9)`, sorting order 10), `BoxCollider2D`, `Rigidbody2D` (Dynamic, `gravityScale = 0`, constraints `FreezeRotation \| FreezePositionY`, interpolation Interpolate), `PlayerController2D` (`interactableLayer` = the Interactable layer, `bodySprite` = own renderer) |
+  | `InteractableBox` | (3, -1.2) | (0.6, 0.6) | layer Interactable; `SpriteRenderer` (color `(0.9, 0.75, 0.3)`); `BoxCollider2D` with `isTrigger = true`; `InteractionTrigger` with a persistent listener (`UnityEventTools.AddPersistentListener`) to `InteractLogger.LogInteracted` on a separate `InteractLogger` object |
+  | `Main Camera` | (0, 1, -10) | — | tag `MainCamera`; `Camera` (orthographic, size 5, background `(0.05, 0.05, 0.08)`); `CameraFollow2D` (`target` = Player, `minX = -15`, `maxX = 15`) |
+  | `Global Light 2D` | — | — | `Light2D` with `lightType = Global`, `intensity = 1`, white. Full brightness here; Task 10 sets the night mood. |
 
-              var playerSO = new SerializedObject(playerController);
-              playerSO.FindProperty("cameraTransform").objectReferenceValue = cameraGO.transform;
-              playerSO.FindProperty("interactableLayer").intValue = 1 << interactableLayer;
-              playerSO.ApplyModifiedPropertiesWithoutUndo();
+  Save to `Assets/_Project/Scenes/PlayerTest.unity` and log `PlayerTest.unity built successfully.`
 
-              var cubeGO = GameObject.CreatePrimitive(PrimitiveType.Cube);
-              cubeGO.name = "InteractableCube";
-              cubeGO.transform.position = new Vector3(3f, 0.5f, 3f);
-              cubeGO.layer = interactableLayer;
-              var trigger = cubeGO.AddComponent<InteractionTrigger>();
-
-              var loggerGO = new GameObject("InteractLogger");
-              var logger = loggerGO.AddComponent<InteractLogger>();
-              UnityEventTools.AddPersistentListener(trigger.OnInteractEvent, logger.LogInteracted);
-
-              Directory.CreateDirectory("Assets/_Project/Scenes");
-              EditorSceneManager.SaveScene(scene, "Assets/_Project/Scenes/PlayerTest.unity");
-              Debug.Log("PlayerTest.unity built successfully.");
-          }
-
-          private static int EnsureLayer(string layerName)
-          {
-              var existing = LayerMask.NameToLayer(layerName);
-              if (existing != -1) return existing;
-
-              var tagManagerAsset = AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/TagManager.asset")[0];
-              var tagManager = new SerializedObject(tagManagerAsset);
-              var layersProp = tagManager.FindProperty("layers");
-              for (int i = 8; i < layersProp.arraySize; i++)
-              {
-                  var layerProp = layersProp.GetArrayElementAtIndex(i);
-                  if (string.IsNullOrEmpty(layerProp.stringValue))
-                  {
-                      layerProp.stringValue = layerName;
-                      tagManager.ApplyModifiedProperties();
-                      return i;
-                  }
-              }
-              throw new System.Exception("No free layer slots available.");
-          }
-      }
-  }
-  ```
-
-  Add `using System.IO;` to the top of this file alongside the other `using` statements (needed for `Directory.CreateDirectory`).
-
-- [ ] **Step 3: Run the builder headlessly**
+- [ ] **Step 7: Run the builder headlessly**
 
   ```bash
   "C:\Program Files\Unity\Hub\Editor\6000.6.3f1\Editor\Unity.exe" -batchmode -nographics -projectPath "C:\Users\My Pc\OneDrive\Desktop\upm-adventure\CampusMystery" -executeMethod CampusMystery.EditorTools.PlayerTestSceneBuilder.Build -quit -logFile "C:\Users\My Pc\OneDrive\Desktop\upm-adventure\CampusMystery\Logs\player-scene-build.log"
   ```
-
-  Check the log:
 
   ```bash
   grep -i "error\|built successfully" "C:\Users\My Pc\OneDrive\Desktop\upm-adventure\CampusMystery\Logs\player-scene-build.log"
@@ -1664,19 +1572,20 @@
 
   Expected: `PlayerTest.unity built successfully.` present, no `error` lines. The "Interactable" layer now exists in **Edit → Project Settings → Tags and Layers**.
 
-- [ ] **Step 4: Manual playtest checklist**
+- [ ] **Step 8: Manual playtest checklist**
 
   Open `Assets/_Project/Scenes/PlayerTest.unity` in the Unity Editor and press Play:
-  - [ ] WASD/arrow keys move the capsule relative to the camera's facing direction.
-  - [ ] The capsule rotates to face its movement direction.
-  - [ ] Standing near the cube and pressing `E` logs "Interacted!" in the Console.
-  - [ ] Pressing `E` far from the cube does nothing.
+  - [ ] A/D and Left/Right walk the player left and right. Up/Down/W/S do nothing.
+  - [ ] The player sprite flips to face the walking direction.
+  - [ ] Walking into either wall stops the player. The player doesn't jitter or slide up/down.
+  - [ ] The camera follows the player but stops before showing past either wall.
+  - [ ] Standing next to the yellow box and pressing `E` logs `Interacted!` once. Pressing `E` far from it logs nothing.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 9: Commit**
 
   ```bash
-  git add Assets/_Project/Scripts Assets/_Project/Scenes ProjectSettings/TagManager.asset
-  git commit -m "feat: add 3rd-person player controller and interaction trigger"
+  git add Assets/_Project/Scripts Assets/_Project/Scenes Assets/_Project/Art ProjectSettings/TagManager.asset
+  git commit -m "feat: add side-view player, camera follow and interaction"
   ```
 
 ---
@@ -1692,405 +1601,53 @@
 - Create (by the script, not by hand): `Assets/_Project/Scenes/Day1.unity`, `Assets/_Project/Art/Data/Suspects/SuspectA_Node1.asset` + `SuspectA_Node2.asset`, `Assets/_Project/Art/Data/Clues/TornNote.asset` + `AlibiWitnessStatement.asset`, `Assets/_Project/Art/Data/DeductionSolution.asset`, `Assets/_Project/Art/Data/Day1Requirements.asset`
 
 **Interfaces:**
-- Consumes: every system produced in Tasks 3–9.
+- Consumes: every system produced in Tasks 3–9, including `BoardUIBuilder.Build`/`BoardNodeSpec` and `DeductionBoardToggle` (Task 7), and `PlaceholderSprites.WhiteSquare`, `EditorLayers.Ensure`, `PlayerController2D`, `CameraFollow2D`, `InteractionTrigger` (Task 9).
 - Produces: the playable Day-1 vertical slice scene — the deliverable this whole plan exists to build.
 
 - [ ] **Step 1: Write the bootstrap and scene-glue runtime scripts**
 
-  `Assets/_Project/Scripts/Runtime/GameBootstrap.cs`:
-
-  ```csharp
-  using UnityEngine;
-  using CampusMystery.Clues;
-  using CampusMystery.Dialogue;
-  using CampusMystery.Deduction;
-  using CampusMystery.Chapters;
-
-  namespace CampusMystery
-  {
-      public class GameBootstrap : MonoBehaviour
-      {
-          [SerializeField] private DeductionSolutionTable solutionTable;
-          [SerializeField] private DayRequirements day1Requirements;
-          [SerializeField] private DeductionBoardController deductionBoard;
-
-          private ClueInventory _clueInventory;
-          private DialogueFlags _flags;
-          private DeductionValidator _validator;
-
-          private void Awake()
-          {
-              _clueInventory = new ClueInventory();
-              _flags = new DialogueFlags();
-              _validator = new DeductionValidator(solutionTable);
-              deductionBoard.Initialize(_validator, _flags);
-          }
-
-          public ClueInventory ClueInventory => _clueInventory;
-          public DialogueFlags Flags => _flags;
-
-          public bool IsDay1Complete()
-          {
-              return DayCompletion.IsDayComplete(day1Requirements, _flags);
-          }
-      }
-  }
-  ```
-
-  `Assets/_Project/Scripts/Runtime/SuspectATrigger.cs` (glues an `InteractionTrigger` to starting suspect A's dialogue and marking `met_suspect_a`):
-
-  ```csharp
-  using UnityEngine;
-  using CampusMystery.Dialogue;
-
-  namespace CampusMystery
-  {
-      public class SuspectATrigger : MonoBehaviour
-      {
-          [SerializeField] private DialogueRunner runner;
-          [SerializeField] private DialogueNode startNode;
-          [SerializeField] private DialogueNode[] allNodes;
-          [SerializeField] private GameBootstrap bootstrap;
-
-          public void Interact()
-          {
-              bootstrap.Flags.Set("met_suspect_a");
-              runner.StartDialogue(startNode, allNodes, bootstrap.ClueInventory, bootstrap.Flags);
-          }
-      }
-  }
-  ```
-
-  `Assets/_Project/Scripts/Runtime/CluePickup.cs` (glues an `InteractionTrigger` to adding a clue to the shared inventory):
-
-  ```csharp
-  using UnityEngine;
-  using CampusMystery.Clues;
-
-  namespace CampusMystery
-  {
-      public class CluePickup : MonoBehaviour
-      {
-          [SerializeField] private ClueData clue;
-          [SerializeField] private GameBootstrap bootstrap;
-
-          public void Interact()
-          {
-              bootstrap.ClueInventory.AddClue(clue);
-          }
-      }
-  }
-  ```
-
-  `Assets/_Project/Scripts/Runtime/Day1DebugHUD.cs` (press Space to check day-completion — a real "Day 1 complete" scene transition is out of scope for this slice, per Global Constraints):
-
-  ```csharp
-  using UnityEngine;
-
-  namespace CampusMystery
-  {
-      public class Day1DebugHUD : MonoBehaviour
-      {
-          [SerializeField] private GameBootstrap bootstrap;
-
-          private void Update()
-          {
-              if (Input.GetKeyDown(KeyCode.Space))
-              {
-                  Debug.Log("IsDay1Complete: " + bootstrap.IsDay1Complete());
-              }
-          }
-      }
-  }
-  ```
+  Unchanged from the original plan except for the input call in `Day1DebugHUD`:
+  - `GameBootstrap` (namespace `CampusMystery`): `[SerializeField] DeductionSolutionTable solutionTable`, `[SerializeField] DayRequirements day1Requirements`, `[SerializeField] DeductionBoardController deductionBoard`. In `Awake` it creates one `ClueInventory`, one `DialogueFlags` and one `DeductionValidator(solutionTable)`, then calls `deductionBoard.Initialize(validator, flags)`. It exposes `ClueInventory ClueInventory`, `DialogueFlags Flags` and `bool IsDay1Complete()` (→ `DayCompletion.IsDayComplete(day1Requirements, Flags)`).
+  - `SuspectATrigger`: `[SerializeField] DialogueRunner runner`, `DialogueNode startNode`, `DialogueNode[] allNodes`, `GameBootstrap bootstrap`. `Interact()` does `bootstrap.Flags.Set("met_suspect_a")`, then `runner.StartDialogue(startNode, allNodes, bootstrap.ClueInventory, bootstrap.Flags)`.
+  - `CluePickup`: `[SerializeField] ClueData clue`, `GameBootstrap bootstrap`. `Interact()` does `bootstrap.ClueInventory.AddClue(clue)` and `Debug.Log($"Picked up {clue.displayName}")`.
+  - `Day1DebugHUD`: `[SerializeField] GameBootstrap bootstrap`. When `Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame`, log `"IsDay1Complete: " + bootstrap.IsDay1Complete()`. A real "Day 1 complete" transition is out of scope for this slice.
 
 - [ ] **Step 2: Write the Editor script that assembles Day 1**
 
-  This script creates every data asset (suspect dialogue, clues, deduction solution, day requirements), builds a gray-box environment (placeholder floor/walls — swapped for the reskinned kit in Step 4 below), and wires the player, suspect, clue pickups, deduction board, and bootstrap together in one scene.
+  `Assets/_Project/Scripts/Editor/Day1SceneBuilder.cs`, `public static void Build()`.
 
-  This goes in the same `Assets/_Project/Scripts/Editor/` folder as Task 5's `DialogueTestSceneBuilder`, covered by the same `CampusMystery.Editor.asmdef`; no new asmdef needed.
+  **Data assets.** Create these exactly as the original plan did, with the same ids and copy:
+  - `SuspectA_Node2`: `nodeId = "suspectA_2"`, `suspectId = "suspect_a"`, body `"...Okay. Fine. That note isn't what you think it is."`
+  - `SuspectA_Node1`: `nodeId = "suspectA_1"`, `suspectId = "suspect_a"`, body `"I was in the library the whole evening. Ask anyone."`. Choices: `"Ask something else"` → `suspectA_1`; `"Ask about the note"` → `suspectA_2` with `requiredClueId = "torn_note"`.
+  - `TornNote`: `clueId = "torn_note"`, `"Torn Note"`, `"A half-burned note found near the scene, addressed to Suspect A."`
+  - `AlibiWitnessStatement`: `clueId = "alibi_witness_statement"`, `"Alibi Witness Statement"`, `"A librarian confirms someone matching Suspect A's description was in the library that night."`
+  - `DeductionSolution`: one link `torn_note` → `suspect_a` (`targetType = "Suspect"`), unlocking `linked_note_to_suspect_a`.
+  - `Day1Requirements`: `requiredFlags = { "met_suspect_a", "linked_note_to_suspect_a" }`.
 
-  `Assets/_Project/Scripts/Editor/Day1SceneBuilder.cs`:
+  **Scene.** A gray-box faculty corridor from x = -15 to 15. Everything uses `PlaceholderSprites.WhiteSquare()` until the reskin in Step 4.
 
-  ```csharp
-  using System.Collections.Generic;
-  using System.IO;
-  using UnityEditor;
-  using UnityEditor.Events;
-  using UnityEditor.SceneManagement;
-  using UnityEngine;
-  using UnityEngine.EventSystems;
-  using UnityEngine.UI;
-  using CampusMystery.Clues;
-  using CampusMystery.Dialogue;
-  using CampusMystery.Deduction;
-  using CampusMystery.Chapters;
-  using CampusMystery.Player;
+  | Object | Position | Scale | Components / settings |
+  |---|---|---|---|
+  | `Floor` | (0, -2) | (30, 1) | `SpriteRenderer` color `(0.22, 0.22, 0.25)`, `BoxCollider2D` |
+  | `BackWall` | (0, 1.5) | (30, 6) | `SpriteRenderer` color `(0.14, 0.15, 0.18)`, sorting order -10, no collider |
+  | `Wall_Left` / `Wall_Right` | (∓15.5, 0.5) | (1, 6) | `SpriteRenderer` color `(0.1, 0.1, 0.12)`, `BoxCollider2D` |
+  | `Player` | (-12, -0.55) | (0.8, 1.8) | as in Task 9's `PlayerTest` scene |
+  | `Clue_torn_note` | (-5, -1.3) | (0.4, 0.4) | layer Interactable; `SpriteRenderer` color `(0.95, 0.9, 0.7)`; trigger `BoxCollider2D`; `InteractionTrigger` → `CluePickup.Interact` (TornNote) |
+  | `SuspectA` | (4, -0.55) | (0.8, 1.8) | layer Interactable; `SpriteRenderer` color `(0.6, 0.35, 0.35)`; trigger `BoxCollider2D`; `InteractionTrigger` → `SuspectATrigger.Interact`; `DialogueRunner` wired to the dialogue canvas |
+  | `Clue_alibi_witness_statement` | (11, -1.3) | (0.4, 0.4) | as `Clue_torn_note`, for AlibiWitnessStatement |
+  | `Main Camera` | (0, 1, -10) | — | as in Task 9, `CameraFollow2D` with `minX = -15`, `maxX = 15` |
+  | `Global Light 2D` | — | — | `Light2D` Global, color `(0.55, 0.6, 0.8)`, `intensity = 0.35` (dim, cool night) |
+  | `DeskLamp` | (4, 1.5) | — | `Light2D` with `lightType = Point`, color `(1, 0.85, 0.6)`, `intensity = 1.2`, `pointLightOuterRadius = 5` (warm pool of light over the suspect) |
+  | `EventSystem` | — | — | `EventSystem` + `InputSystemUIInputModule` |
+  | `DialogueCanvas` | — | — | built and wired to `SuspectA`'s `DialogueRunner` exactly like the original plan's `WireDialogueUI` helper: overlay canvas, `BodyText` at (0, 120) 600×100, two choice buttons 400×40 at y = 0 and -50, `LegacyRuntime.ttf` |
+  | Deduction board | — | — | `BoardUIBuilder.Build` with `torn_note`/"Torn Note" at (-300, 80), `alibi_witness_statement`/"Alibi Statement" at (-300, -80), `suspect_a`/"Suspect A" at (300, 0). The alibi node gives the player a wrong pair to try. |
+  | `BoardToggle` | — | — | `DeductionBoardToggle` with `boardPanel` = the board controller's GameObject, `disableWhileOpen = { PlayerController2D }`, `startOpen = false` |
+  | `GameBootstrap` | — | — | wired to `DeductionSolution`, `Day1Requirements` and the board controller |
+  | `Day1DebugHUD` | — | — | wired to `GameBootstrap` |
 
-  namespace CampusMystery.EditorTools
-  {
-      public static class Day1SceneBuilder
-      {
-          public static void Build()
-          {
-              var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+  The suspect and the two clues are at least 7 units apart, more than twice `interactRadius` (1.2), so in normal play only one interactable is ever in range. `InteractionPicker` still covers the case where they get moved closer during reskinning.
 
-              Directory.CreateDirectory("Assets/_Project/Art/Data/Suspects");
-              Directory.CreateDirectory("Assets/_Project/Art/Data/Clues");
-
-              var suspectANode2 = ScriptableObject.CreateInstance<DialogueNode>();
-              suspectANode2.nodeId = "suspectA_2";
-              suspectANode2.suspectId = "suspect_a";
-              suspectANode2.bodyText = "...Okay. Fine. That note isn't what you think it is.";
-              AssetDatabase.CreateAsset(suspectANode2, "Assets/_Project/Art/Data/Suspects/SuspectA_Node2.asset");
-
-              var suspectANode1 = ScriptableObject.CreateInstance<DialogueNode>();
-              suspectANode1.nodeId = "suspectA_1";
-              suspectANode1.suspectId = "suspect_a";
-              suspectANode1.bodyText = "I was in the library the whole evening. Ask anyone.";
-              suspectANode1.choices = new List<DialogueChoice>
-              {
-                  new DialogueChoice { choiceText = "Ask something else", nextNodeId = "suspectA_1" },
-                  new DialogueChoice { choiceText = "Ask about the note", nextNodeId = "suspectA_2", requiredClueId = "torn_note" }
-              };
-              AssetDatabase.CreateAsset(suspectANode1, "Assets/_Project/Art/Data/Suspects/SuspectA_Node1.asset");
-
-              var tornNote = ScriptableObject.CreateInstance<ClueData>();
-              tornNote.clueId = "torn_note";
-              tornNote.displayName = "Torn Note";
-              tornNote.description = "A half-burned note found near the scene, addressed to Suspect A.";
-              AssetDatabase.CreateAsset(tornNote, "Assets/_Project/Art/Data/Clues/TornNote.asset");
-
-              var alibiStatement = ScriptableObject.CreateInstance<ClueData>();
-              alibiStatement.clueId = "alibi_witness_statement";
-              alibiStatement.displayName = "Alibi Witness Statement";
-              alibiStatement.description = "A librarian confirms someone matching Suspect A's description was in the library that night.";
-              AssetDatabase.CreateAsset(alibiStatement, "Assets/_Project/Art/Data/Clues/AlibiWitnessStatement.asset");
-
-              var solutionTable = ScriptableObject.CreateInstance<DeductionSolutionTable>();
-              solutionTable.validLinks = new List<DeductionLink>
-              {
-                  new DeductionLink
-                  {
-                      clueId = "torn_note",
-                      targetId = "suspect_a",
-                      targetType = "Suspect",
-                      unlockFlags = new List<string> { "linked_note_to_suspect_a" }
-                  }
-              };
-              AssetDatabase.CreateAsset(solutionTable, "Assets/_Project/Art/Data/DeductionSolution.asset");
-
-              var day1Requirements = ScriptableObject.CreateInstance<DayRequirements>();
-              day1Requirements.requiredFlags = new List<string> { "met_suspect_a", "linked_note_to_suspect_a" };
-              AssetDatabase.CreateAsset(day1Requirements, "Assets/_Project/Art/Data/Day1Requirements.asset");
-
-              AssetDatabase.SaveAssets();
-
-              var floor = GameObject.CreatePrimitive(PrimitiveType.Plane);
-              floor.name = "Floor_Blockout";
-              floor.transform.localScale = new Vector3(3f, 1f, 3f);
-              CreateWallBlockout("Wall_North", new Vector3(0, 1.5f, 15f), new Vector3(30f, 3f, 0.5f));
-              CreateWallBlockout("Wall_South", new Vector3(0, 1.5f, -15f), new Vector3(30f, 3f, 0.5f));
-              CreateWallBlockout("Wall_East", new Vector3(15f, 1.5f, 0), new Vector3(0.5f, 3f, 30f));
-              CreateWallBlockout("Wall_West", new Vector3(-15f, 1.5f, 0), new Vector3(0.5f, 3f, 30f));
-
-              var lightGO = new GameObject("Key Light", typeof(Light));
-              var light = lightGO.GetComponent<Light>();
-              light.type = LightType.Directional;
-              light.color = new Color(1f, 0.92f, 0.75f);
-              light.intensity = 0.6f;
-              lightGO.transform.rotation = Quaternion.Euler(50f, -30f, 0f);
-              RenderSettings.ambientIntensity = 0.3f;
-
-              int interactableLayer = EnsureLayer("Interactable");
-
-              var playerGO = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-              playerGO.name = "Player";
-              Object.DestroyImmediate(playerGO.GetComponent<CapsuleCollider>());
-              playerGO.AddComponent<CharacterController>();
-              var playerController = playerGO.AddComponent<PlayerController>();
-              playerGO.transform.position = new Vector3(0f, 1f, -10f);
-
-              var cameraGO = new GameObject("Main Camera", typeof(Camera));
-              cameraGO.tag = "MainCamera";
-              cameraGO.transform.SetParent(playerGO.transform);
-              cameraGO.transform.localPosition = new Vector3(0f, 3f, -6f);
-              cameraGO.transform.localRotation = Quaternion.Euler(25f, 0f, 0f);
-              cameraGO.AddComponent<PhysicsRaycaster>();
-
-              var playerSO = new SerializedObject(playerController);
-              playerSO.FindProperty("cameraTransform").objectReferenceValue = cameraGO.transform;
-              playerSO.FindProperty("interactableLayer").intValue = 1 << interactableLayer;
-              playerSO.ApplyModifiedPropertiesWithoutUndo();
-
-              new GameObject("EventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
-
-              var boardGO = new GameObject("DeductionBoardController", typeof(DeductionBoardController));
-              boardGO.transform.position = new Vector3(-10f, 0f, -10f);
-              var lineGO = new GameObject("DragLinePreview", typeof(LineRenderer));
-              lineGO.transform.SetParent(boardGO.transform);
-              var board = boardGO.GetComponent<DeductionBoardController>();
-              var boardSO = new SerializedObject(board);
-              boardSO.FindProperty("dragLinePreview").objectReferenceValue = lineGO.GetComponent<LineRenderer>();
-              boardSO.ApplyModifiedPropertiesWithoutUndo();
-
-              CreateDeductionNode("torn_note", new Vector3(-12f, 0f, -10f), board);
-              CreateDeductionNode("suspect_a", new Vector3(-8f, 0f, -10f), board);
-
-              var bootstrapGO = new GameObject("GameBootstrap", typeof(GameBootstrap));
-              var bootstrap = bootstrapGO.GetComponent<GameBootstrap>();
-              var bootstrapSO = new SerializedObject(bootstrap);
-              bootstrapSO.FindProperty("solutionTable").objectReferenceValue = solutionTable;
-              bootstrapSO.FindProperty("day1Requirements").objectReferenceValue = day1Requirements;
-              bootstrapSO.FindProperty("deductionBoard").objectReferenceValue = board;
-              bootstrapSO.ApplyModifiedPropertiesWithoutUndo();
-
-              var suspectGO = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-              suspectGO.name = "SuspectA";
-              suspectGO.transform.position = new Vector3(5f, 1f, 5f);
-              suspectGO.layer = interactableLayer;
-              var suspectTrigger = suspectGO.AddComponent<InteractionTrigger>();
-              var suspectRunner = suspectGO.AddComponent<DialogueRunner>();
-              var suspectHandler = suspectGO.AddComponent<SuspectATrigger>();
-              WireDialogueUI(suspectRunner);
-
-              var suspectHandlerSO = new SerializedObject(suspectHandler);
-              suspectHandlerSO.FindProperty("runner").objectReferenceValue = suspectRunner;
-              suspectHandlerSO.FindProperty("startNode").objectReferenceValue = suspectANode1;
-              var allNodesProp = suspectHandlerSO.FindProperty("allNodes");
-              allNodesProp.arraySize = 2;
-              allNodesProp.GetArrayElementAtIndex(0).objectReferenceValue = suspectANode1;
-              allNodesProp.GetArrayElementAtIndex(1).objectReferenceValue = suspectANode2;
-              suspectHandlerSO.FindProperty("bootstrap").objectReferenceValue = bootstrap;
-              suspectHandlerSO.ApplyModifiedPropertiesWithoutUndo();
-              UnityEventTools.AddPersistentListener(suspectTrigger.OnInteractEvent, suspectHandler.Interact);
-
-              CreateCluePickup(tornNote, new Vector3(2f, 0.5f, -2f), interactableLayer, bootstrap);
-              CreateCluePickup(alibiStatement, new Vector3(-2f, 0.5f, 6f), interactableLayer, bootstrap);
-
-              var hudGO = new GameObject("Day1DebugHUD", typeof(Day1DebugHUD));
-              var hudSO = new SerializedObject(hudGO.GetComponent<Day1DebugHUD>());
-              hudSO.FindProperty("bootstrap").objectReferenceValue = bootstrap;
-              hudSO.ApplyModifiedPropertiesWithoutUndo();
-
-              Directory.CreateDirectory("Assets/_Project/Scenes");
-              EditorSceneManager.SaveScene(scene, "Assets/_Project/Scenes/Day1.unity");
-              Debug.Log("Day1.unity built successfully.");
-          }
-
-          private static void CreateWallBlockout(string name, Vector3 position, Vector3 scale)
-          {
-              var wall = GameObject.CreatePrimitive(PrimitiveType.Cube);
-              wall.name = name;
-              wall.transform.position = position;
-              wall.transform.localScale = scale;
-          }
-
-          private static void CreateDeductionNode(string nodeId, Vector3 position, DeductionBoardController board)
-          {
-              var nodeGO = GameObject.CreatePrimitive(PrimitiveType.Cube);
-              nodeGO.name = $"DeductionNode_{nodeId}";
-              nodeGO.transform.position = position;
-              var view = nodeGO.AddComponent<DeductionNodeView>();
-              view.NodeId = nodeId;
-              var viewSO = new SerializedObject(view);
-              viewSO.FindProperty("board").objectReferenceValue = board;
-              viewSO.FindProperty("nodeRenderer").objectReferenceValue = nodeGO.GetComponent<Renderer>();
-              viewSO.ApplyModifiedPropertiesWithoutUndo();
-          }
-
-          private static void CreateCluePickup(ClueData clue, Vector3 position, int interactableLayer, GameBootstrap bootstrap)
-          {
-              var clueGO = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-              clueGO.name = $"Clue_{clue.clueId}";
-              clueGO.transform.position = position;
-              clueGO.transform.localScale = Vector3.one * 0.4f;
-              clueGO.layer = interactableLayer;
-              var trigger = clueGO.AddComponent<InteractionTrigger>();
-              var pickup = clueGO.AddComponent<CluePickup>();
-
-              var pickupSO = new SerializedObject(pickup);
-              pickupSO.FindProperty("clue").objectReferenceValue = clue;
-              pickupSO.FindProperty("bootstrap").objectReferenceValue = bootstrap;
-              pickupSO.ApplyModifiedPropertiesWithoutUndo();
-
-              UnityEventTools.AddPersistentListener(trigger.OnInteractEvent, pickup.Interact);
-          }
-
-          private static void WireDialogueUI(DialogueRunner runner)
-          {
-              var canvasGO = new GameObject("DialogueCanvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
-              canvasGO.GetComponent<Canvas>().renderMode = RenderMode.ScreenSpaceOverlay;
-              var font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-
-              var bodyGO = new GameObject("BodyText", typeof(Text));
-              bodyGO.transform.SetParent(canvasGO.transform, false);
-              var bodyText = bodyGO.GetComponent<Text>();
-              bodyText.font = font;
-              bodyText.rectTransform.anchoredPosition = new Vector2(0, 120);
-              bodyText.rectTransform.sizeDelta = new Vector2(600, 100);
-
-              var buttons = new Button[2];
-              var labels = new Text[2];
-              for (int i = 0; i < 2; i++)
-              {
-                  var btnGO = new GameObject($"ChoiceButton{i}", typeof(Image), typeof(Button));
-                  btnGO.transform.SetParent(canvasGO.transform, false);
-                  var rt = btnGO.GetComponent<RectTransform>();
-                  rt.sizeDelta = new Vector2(400, 40);
-                  rt.anchoredPosition = new Vector2(0, -i * 50);
-
-                  var labelGO = new GameObject("Label", typeof(Text));
-                  labelGO.transform.SetParent(btnGO.transform, false);
-                  var label = labelGO.GetComponent<Text>();
-                  label.font = font;
-                  label.alignment = TextAnchor.MiddleCenter;
-                  label.rectTransform.anchorMin = Vector2.zero;
-                  label.rectTransform.anchorMax = Vector2.one;
-                  label.rectTransform.offsetMin = Vector2.zero;
-                  label.rectTransform.offsetMax = Vector2.zero;
-
-                  buttons[i] = btnGO.GetComponent<Button>();
-                  labels[i] = label;
-              }
-
-              var runnerSO = new SerializedObject(runner);
-              runnerSO.FindProperty("bodyText").objectReferenceValue = bodyText;
-              var buttonsProp = runnerSO.FindProperty("choiceButtons");
-              buttonsProp.arraySize = 2;
-              var labelsProp = runnerSO.FindProperty("choiceLabels");
-              labelsProp.arraySize = 2;
-              for (int i = 0; i < 2; i++)
-              {
-                  buttonsProp.GetArrayElementAtIndex(i).objectReferenceValue = buttons[i];
-                  labelsProp.GetArrayElementAtIndex(i).objectReferenceValue = labels[i];
-              }
-              runnerSO.ApplyModifiedPropertiesWithoutUndo();
-          }
-
-          private static int EnsureLayer(string layerName)
-          {
-              var existing = LayerMask.NameToLayer(layerName);
-              if (existing != -1) return existing;
-
-              var tagManagerAsset = AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/TagManager.asset")[0];
-              var tagManager = new SerializedObject(tagManagerAsset);
-              var layersProp = tagManager.FindProperty("layers");
-              for (int i = 8; i < layersProp.arraySize; i++)
-              {
-                  var layerProp = layersProp.GetArrayElementAtIndex(i);
-                  if (string.IsNullOrEmpty(layerProp.stringValue))
-                  {
-                      layerProp.stringValue = layerName;
-                      tagManager.ApplyModifiedProperties();
-                      return i;
-                  }
-              }
-              throw new System.Exception("No free layer slots available.");
-          }
-      }
-  }
-  ```
+  Save to `Assets/_Project/Scenes/Day1.unity` and log `Day1.unity built successfully.`
 
 - [ ] **Step 3: Run the builder headlessly**
 
@@ -2098,50 +1655,48 @@
   "C:\Program Files\Unity\Hub\Editor\6000.6.3f1\Editor\Unity.exe" -batchmode -nographics -projectPath "C:\Users\My Pc\OneDrive\Desktop\upm-adventure\CampusMystery" -executeMethod CampusMystery.EditorTools.Day1SceneBuilder.Build -quit -logFile "C:\Users\My Pc\OneDrive\Desktop\upm-adventure\CampusMystery\Logs\day1-scene-build.log"
   ```
 
-  Check the log:
-
   ```bash
   grep -i "error\|built successfully" "C:\Users\My Pc\OneDrive\Desktop\upm-adventure\CampusMystery\Logs\day1-scene-build.log"
   ```
 
   Expected: `Day1.unity built successfully.` present, no `error` lines.
 
-- [ ] **Step 4: Reskin the environment (manual — after the gray-box slice plays correctly)**
+- [ ] **Step 4: Reskin with pixel art (manual — after the gray-box slice plays correctly)**
 
-  The scene above uses placeholder cube/plane geometry (`Floor_Blockout`, `Wall_North/South/East/West`) so the full loop is playable immediately. Once Step 5's playtest passes on the gray-box, import the [3D Free Modular Kit](https://assetstore.unity.com/packages/3d/environments/3d-free-modular-kit-85732) via the Unity Editor's Asset Store window (this step needs the Editor GUI — Asset Store downloads require a signed-in interactive session) and swap the blockout pieces for reskinned kit pieces: muted/desaturated materials, school-appropriate dressing (a bench, lockers or shelving, signage using the fictional campus name from the spec — never real UPM branding). Keep the `Key Light` directional light and ambient settings as a starting point for the moody stylized-realistic look, adjusting to taste.
+  Once Step 5's playtest passes on the gray-box:
+  1. Pick a free pixel-art pack with school/office interiors and side-view characters (itch.io or the Unity Asset Store). Check its license allows use in a free or commercial game, and record the pack name, URL and license in `docs/superpowers/specs/` next to the spec.
+  2. Import it under `Assets/ThirdParty/<PackName>/`. Set every texture to `Sprite`, Point filtering, no compression, 32 pixels per unit (or the pack's native tile size, applied the same everywhere).
+  3. Swap the placeholder `SpriteRenderer` sprites for real ones: corridor wall, floor, lockers or notice boards, a desk and lamp near the suspect, the two clue props, and the player and suspect characters. Keep every object's name, layer, collider and component wiring.
+  4. Add the fictional campus name (from the spec) to at least one sign. Never use real UPM names, logos or building names.
+  5. Optionally add URP's `PixelPerfectCamera` to `Main Camera` (assets PPU 32, reference resolution 640×360) for crisp pixels.
+  6. Tune the two lights for a dim, muted night look, using the values above as a starting point.
 
 - [ ] **Step 5: Full manual playtest checklist**
 
   Open `Assets/_Project/Scenes/Day1.unity` in the Unity Editor and press Play:
-  - [ ] Player can walk from the entrance to every clue and to the suspect.
-  - [ ] Picking up `TornNote` and `AlibiWitnessStatement` (walk up, press `E`) adds them to the inventory (add a temporary `Debug.Log` in `CluePickup.Interact` if you want on-screen confirmation).
-  - [ ] Talking to suspect A (press `E`) before picking up `torn_note` does **not** show the "Ask about the note" choice; after picking it up, the choice appears.
-  - [ ] Connecting `torn_note` → `suspect_a` on the deduction board (click-drag between the two cubes) turns both green and does not error.
-  - [ ] Pressing Space logs `IsDay1Complete: True` only once both `met_suspect_a` (talked to the suspect) and `linked_note_to_suspect_a` (made the deduction-board connection) have happened.
-  - [ ] Connecting an unrelated clue/suspect pair on the board is silently rejected (no false unlock, no error).
+  - [ ] The player can walk from the left end of the corridor to both clues and the suspect. The walls stop them, and the camera never shows past either end.
+  - [ ] Walking up to each clue and pressing `E` logs `Picked up Torn Note` / `Picked up Alibi Witness Statement`.
+  - [ ] Talking to Suspect A (`E`) before picking up the torn note shows "Ask about the note" as not clickable. After picking it up, it becomes clickable and leads to the second line.
+  - [ ] Tab opens the board. While it's open, A/D doesn't move the player and `E` triggers nothing. Tab closes it and movement works again.
+  - [ ] On the board, dragging "Torn Note" onto "Suspect A" (or the reverse) turns both green with no error. Dragging "Alibi Statement" onto "Suspect A" does nothing.
+  - [ ] Space logs `IsDay1Complete: False` until both talking to the suspect and the board connection have happened, then `IsDay1Complete: True`.
+  - [ ] The scene reads as a dim corridor with a warm light over the suspect. It isn't uniformly bright and it isn't black.
 
 - [ ] **Step 6: Commit**
 
   ```bash
   git add Assets/_Project/Scripts Assets/_Project/Scenes Assets/_Project/Art
-  git commit -m "feat: wire Day 1 vertical slice end-to-end"
+  git commit -m "feat: wire Day 1 side-view vertical slice end-to-end"
   ```
+
+  If Step 4's reskin is done in the same session, also `git add Assets/ThirdParty` and the license note, in a separate commit: `chore: add pixel-art pack and reskin Day 1`.
 
 ---
 
 ## Self-Review Notes
 
-- **Spec coverage:** player movement/camera (Task 9), dialogue + clue-gated choices (Tasks 3–5), clue pickups (Task 3, wired in Task 10), deduction board connect-and-unlock (Tasks 6–7), day-completion check (Task 8), environment reskin of the free kit (Task 10 Step 4), fictional-campus-name constraint (called out in Task 10 Step 4 and Global Constraints). `ChapterManager` multi-day gating beyond a single day and `AccusationSystem` are intentionally deferred — see Global Constraints.
-- **Type consistency:** `ClueInventory`/`ClueData` (Task 3) → consumed identically in Tasks 4, 5, 7, 10. `DialogueFlags.Set`/`Get` (Task 4) → consumed identically in Tasks 7, 8, 10. `DeductionValidator.TryConnect` returning `ConnectionResult` (Task 6) → consumed identically in Task 7. `DayRequirements`/`DayCompletion.IsDayComplete` (Task 8) → consumed identically in Task 10. `InteractionTrigger.OnInteractEvent` (Task 9) → consumed identically by `UnityEventTools.AddPersistentListener` calls in Task 9's and Task 10's Editor scripts.
-- **No placeholders:** every code step above has full, runnable code; every manual/editor step gives concrete actions and a concrete checklist rather than "playtest and verify."
-- **Execution mode (per human partner's choice):** all scene/prefab construction is done by Editor scripts under `Assets/_Project/Scripts/Editor/`, run headlessly via `Unity.exe -batchmode -executeMethod ... -quit`, sharing one `CampusMystery.Editor.asmdef` created in Task 5. EditMode tests likewise run headlessly via `-runTests`. Only Task 10 Step 4 (importing and reskinning the free asset kit) requires the Editor GUI, since Asset Store downloads need an interactive signed-in session — everything else in this plan is achievable through Bash + Unity's CLI alone. Manual playtest checklists remain manual by nature (a human has to watch the result), but no task requires hand-clicking GameObjects together in the Editor.
-
----
-
-**Plan complete and saved to `docs/superpowers/plans/2026-09-27-campus-mystery-vertical-slice.md`.** Two execution options:
-
-**1. Subagent-Driven (recommended)** — I dispatch a fresh subagent per task, review between tasks, fast iteration.
-
-**2. Inline Execution** — Execute tasks in this session using executing-plans, batch execution with checkpoints.
-
-Which approach?
+- **Spec coverage:** side-view 2D movement, camera clamped to the room, and 2D interaction (Task 9); dialogue + clue-gated choices (Tasks 3–5); clue pickups (Task 3, wired in Task 10); deduction board as a toggled overlay with connect-and-unlock (Tasks 6–7); day-completion check (Task 8); URP 2D Renderer conversion (Task 1 Step 3); pixel-art reskin with 2D lighting mood and the fictional-campus-name rule (Task 10 Step 4, Global Constraints). `ChapterManager` multi-day gating beyond a single day, `AccusationSystem`, doors between rooms, and the other locations are intentionally deferred — see Global Constraints.
+- **Type consistency:** `ClueInventory`/`ClueData` (Task 3) → used the same way in Tasks 4, 5 and 10. `DialogueFlags.Set`/`Get` (Task 4) → Tasks 7, 8, 10. `DeductionValidator.TryConnect` → `ConnectionResult` (Task 6) → wrapped by `DeductionBoardController.TryConnectEitherOrder` (Task 7). `DayRequirements`/`DayCompletion.IsDayComplete` (Task 8) → Task 10. `InteractionTrigger.OnInteractEvent` (Task 9) → `UnityEventTools.AddPersistentListener` in Tasks 9 and 10. `BoardUIBuilder`, `PlaceholderSprites`, `EditorLayers` (Editor, Tasks 7 and 9) → reused by Task 10.
+- **Known gap kept from the original plan:** the dialogue panel is always on screen and has no close button, and the player can still walk while it's showing. That's acceptable for proving the loop. Closing dialogue belongs in the follow-up plan for Days 2–5.
+- **Input:** every runtime key read uses `Keyboard.current` with a null check, and every scene's EventSystem uses `InputSystemUIInputModule`. This matches the project's "Input System Package (New)" active input handling.
+- **Execution mode (per human partner's choice):** all scene/prefab construction is done by Editor scripts under `Assets/_Project/Scripts/Editor/` (plus the one-off `Assets/_Project/Setup/Editor/ProjectSetup2D.cs`), run headlessly via `Unity.exe -batchmode -executeMethod ... -quit`. EditMode tests likewise run headlessly via `-runTests`. Only Task 10 Step 4 (picking, importing and applying a pixel-art pack) needs the Editor GUI. Manual playtest checklists remain manual by nature, but no task requires hand-clicking GameObjects together in the Editor.

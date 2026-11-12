@@ -1,1 +1,8 @@
 .superpowers/
+
+# Old Unity project (no longer used; kept on disk only until it's deleted)
+/CampusMystery/
+
+# Web game
+game/node_modules/
+game/dist/

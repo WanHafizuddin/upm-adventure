@@ -1,0 +1,287 @@
+:root {
+  --ink: #e8e3d5;
+  --muted: #9a9fae;
+  --amber: #e0b46a;
+  --panel: rgba(10, 11, 17, 0.94);
+  --edge: #3a3f52;
+  --good: #7fc79a;
+  --serif: Georgia, 'Times New Roman', serif;
+  --sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: #000;
+  color: var(--ink);
+  font-family: var(--sans);
+  overflow: hidden;
+}
+
+#game {
+  position: fixed;
+  inset: 0;
+}
+
+/* Everything in #ui sits on top of the canvas. Only real panels catch the mouse. */
+#ui {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+/* --- HUD --- */
+
+.hud {
+  position: absolute;
+  top: 12px;
+  left: 16px;
+  right: 16px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  color: var(--muted);
+  text-shadow: 0 1px 2px #000;
+}
+
+.hud .where {
+  font-family: var(--serif);
+  font-style: italic;
+  color: var(--ink);
+}
+
+/* --- Panels --- */
+
+.panel {
+  position: absolute;
+  pointer-events: auto;
+  background: var(--panel);
+  border: 1px solid var(--edge);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+}
+
+.hint {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* --- Dialogue --- */
+
+.dialogue {
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  width: min(760px, calc(100% - 32px));
+  padding: 18px 22px 14px;
+}
+
+.dialogue .speaker {
+  font-family: var(--serif);
+  font-size: 15px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--amber);
+}
+
+.dialogue .line {
+  margin: 8px 0 14px;
+  font-family: var(--serif);
+  font-size: 20px;
+  line-height: 1.45;
+}
+
+.dialogue .choices {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.dialogue button {
+  width: 100%;
+  text-align: left;
+  padding: 8px 12px;
+  font: 16px var(--sans);
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--edge);
+  cursor: pointer;
+}
+
+.dialogue button:hover:not(:disabled),
+.dialogue button:focus-visible {
+  border-color: var(--amber);
+  background: rgba(224, 180, 106, 0.1);
+  outline: none;
+}
+
+.dialogue button:disabled {
+  color: #5d6170;
+  cursor: not-allowed;
+}
+
+/* --- Deduction board --- */
+
+.board {
+  inset: 48px 32px 32px;
+  display: flex;
+  flex-direction: column;
+  padding: 18px 24px;
+  background:
+    radial-gradient(ellipse at center, rgba(70, 52, 34, 0.35), transparent 70%),
+    var(--panel);
+}
+
+.board header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid var(--edge);
+  padding-bottom: 10px;
+}
+
+.board h2 {
+  margin: 0;
+  font: italic 26px var(--serif);
+  color: var(--amber);
+}
+
+.board-area {
+  position: relative;
+  flex: 1;
+  margin-top: 12px;
+  user-select: none;
+}
+
+.board-lines {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.board-lines line {
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.board-lines line.made {
+  stroke: #c0392b;
+}
+
+.board-lines line.preview {
+  stroke: var(--ink);
+  stroke-dasharray: 6 6;
+}
+
+.board-empty {
+  position: absolute;
+  left: 8%;
+  top: 18%;
+  max-width: 34%;
+  margin: 0;
+  font: italic 16px var(--serif);
+  color: var(--muted);
+}
+
+.card {
+  position: absolute;
+  width: min(300px, 34%);
+  padding: 10px 14px;
+  background: #e9e0c9;
+  color: #22201b;
+  border: 1px solid #b9ad8d;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  cursor: grab;
+  touch-action: none;
+}
+
+.card.left {
+  left: 8%;
+}
+
+.card.right {
+  right: 8%;
+}
+
+.card.suspect {
+  background: #d8d3c6;
+}
+
+.card .kind {
+  display: block;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #7a6f57;
+}
+
+.card strong {
+  display: block;
+  font: 18px var(--serif);
+}
+
+.card small {
+  display: block;
+  margin-top: 4px;
+  font-size: 13px;
+  line-height: 1.35;
+  color: #4a463c;
+}
+
+.card.dragging {
+  cursor: grabbing;
+  outline: 2px solid var(--amber);
+}
+
+.card.connected {
+  border-color: var(--good);
+  box-shadow: 0 0 0 2px var(--good), 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+/* --- Toasts --- */
+
+.toasts {
+  position: absolute;
+  top: 44px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: grid;
+  gap: 6px;
+  justify-items: center;
+  z-index: 10;
+}
+
+.toast {
+  padding: 8px 16px;
+  font-size: 15px;
+  background: var(--panel);
+  border: 1px solid var(--edge);
+  border-left: 3px solid var(--amber);
+  animation: toast-in 0.2s ease-out;
+  transition: opacity 0.4s;
+}
+
+.toast.leaving {
+  opacity: 0;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
