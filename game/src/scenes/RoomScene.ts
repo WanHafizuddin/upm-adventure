@@ -22,10 +22,14 @@ export class RoomScene extends WorldScene {
     this.block(w / 2, WALL_H / 2, w, WALL_H);
     this.block(3, h / 2, 6, h);
     this.block(w - 3, h / 2, 6, h);
-    const leftW = room.doorX - DOOR_W / 2;
-    const rightX = room.doorX + DOOR_W / 2;
-    this.block(leftW / 2, h - 4, leftW, 8);
-    this.block((rightX + w) / 2, h - 4, w - rightX, 8);
+    if (room.doorX === undefined) {
+      this.block(w / 2, h - 4, w, 8);
+    } else {
+      const leftW = room.doorX - DOOR_W / 2;
+      const rightX = room.doorX + DOOR_W / 2;
+      this.block(leftW / 2, h - 4, leftW, 8);
+      this.block((rightX + w) / 2, h - 4, w - rightX, 8);
+    }
 
     for (const piece of room.furniture) {
       const spec = FURNITURE[piece.kind];

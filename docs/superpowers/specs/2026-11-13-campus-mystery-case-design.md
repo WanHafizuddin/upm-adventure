@@ -74,7 +74,7 @@ Later days add links such as Library Gate Log ↔ Farah's Alibi (Farah cleared),
 
 - **Day 1 (built):** meet all three suspects (`met_farah`, `met_daniel`, `met_priya`), examine the crime scene (`examined_scene`), and work out how he died (`linked_tumbler_to_victim`).
 - **Day 2 (built):** PSAS (Puan Lim, librarian on night duty), the security office (Encik Rahman, the guard who found him) and the Fakulti Sains ground floor (Kak Ani, the cleaner). Goals: meet all three (`met_librarian`, `met_guard`, `met_cleaner`) and clear Farah (`farah_cleared`). Day 2 links: Library Gate Log ↔ Farah's Alibi, Door Access Log ↔ Lab Access Card, Door Access Log ↔ Daniel's Alibi, Cleaner's Statement ↔ Coffee Tumbler.
-- **Day 3:** Lab 2, Rosli's office, Priya's office. Clear Priya, break Daniel's alibi.
+- **Day 3 (built):** Makmal 2 (Daniel is there), Fakulti Sains Aras 1, Dr. Rosli's office and Dr. Priya's office (she is there). Goals: read the logbook (`examined_logbook`), search Rosli's office (`examined_rosli_office`), ask Priya about her call (`checked_priya_call`), and on the board break Daniel's alibi (`daniel_alibi_broken`: Pre-signed Logbook ↔ Daniel's Alibi) and clear Priya (`priya_cleared`: Video Call Record ↔ The Argument). Optional: Rosli's Audit Notes ↔ Daniel (`daniel_motive`).
 - **Day 4:** toxicology arrives. Confront each suspect with evidence.
 - **Day 5:** accusation.
 

@@ -54,6 +54,24 @@ export const CLUES: Readonly<Record<string, Clue>> = {
     name: "Cleaner's Statement",
     description: 'Kak Ani saw Daniel at the pantry counter around 9:45 pm, standing next to a steel tumbler.',
   },
+  // Day 3
+  presigned_logbook: {
+    id: 'presigned_logbook',
+    name: 'Pre-signed Logbook',
+    description:
+      "Makmal 2's logbook: the 10:00 and 10:30 entries are signed identically, in one stroke, with the same smudge. They were written in advance.",
+  },
+  audit_notes: {
+    id: 'audit_notes',
+    name: "Rosli's Audit Notes",
+    description:
+      'A reagent is missing from the Makmal 2 stores and the stock bottles were topped up to hide it. A sticky note: "Report D.W. to the Dean — Thurs 9am."',
+  },
+  video_call_record: {
+    id: 'video_call_record',
+    name: 'Video Call Record',
+    description: "Priya's office computer: a video call with Melbourne from 9:58 pm to 11:02 pm.",
+  },
 };
 
 export interface Person {
@@ -133,5 +151,24 @@ export const LINKS: readonly DeductionLink[] = [
     targetId: 'coffee_tumbler',
     unlockFlags: ['tumbler_at_pantry'],
     insight: "Dr. Rosli's tumbler was at the pantry at 9:45 — and so was Daniel.",
+  },
+  // Day 3
+  {
+    clueId: 'presigned_logbook',
+    targetId: 'daniel_alibi',
+    unlockFlags: ['daniel_alibi_broken'],
+    insight: "Daniel signed the logbook in advance. His 'all night in the lab' alibi is fake.",
+  },
+  {
+    clueId: 'video_call_record',
+    targetId: 'priya_argument',
+    unlockFlags: ['priya_cleared'],
+    insight: "Priya was on a call from 9:58 to 11:02. She couldn't have done it.",
+  },
+  {
+    clueId: 'audit_notes',
+    targetId: 'daniel',
+    unlockFlags: ['daniel_motive'],
+    insight: 'Dr. Rosli was about to report Daniel for stealing from the stores. That is a motive.',
   },
 ];

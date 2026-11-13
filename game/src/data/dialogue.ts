@@ -287,13 +287,114 @@ const day2: Array<[string, DialogueNode]> = [
     choices: [leave],
   }),
 
-  // Things to look at.
+];
+
+// --- Day 3 -----------------------------------------------------------------------
+
+const daniel3Topics: DialogueChoice[] = [
+  { text: 'Where were you that night?', next: 'daniel3_alibi' },
+  { text: 'Ask about the logbook', next: 'daniel3_logbook', requiresClue: 'presigned_logbook' },
+  { text: 'Ask about the stores', next: 'daniel3_stores', requiresClue: 'audit_notes' },
+  leave,
+];
+
+const priya3Topics: DialogueChoice[] = [
+  { text: 'Ask about the video call', next: 'priya3_call' },
+  { text: 'When did you last see him?', next: 'priya3_argument' },
+  { text: 'What do you think happened?', next: 'priya3_theory' },
+  leave,
+];
+
+const day3: Array<[string, DialogueNode]> = [
+  // Makmal 2.
   node({
-    id: 'lab_door',
+    id: 'lab_logbook',
     speaker: 'You',
-    text: 'MAKMAL 2. A sign on the door: "Eksperimen sedang berjalan — jangan ganggu." Experiment in progress, do not disturb. It\'s locked, and police tape crosses the handle.',
+    text: "Makmal 2's logbook lies open by the reactor. 21:30 — D. Wong. 22:00 — D. Wong. 22:30 — D. Wong. The last two signatures are identical: same slant, same smudge, written in one stroke. Someone signed them in advance.",
+    setsFlag: 'examined_logbook',
+    givesClue: 'presigned_logbook',
     choices: [{ text: 'Step back', next: null }],
+  }),
+  node({
+    id: 'lab_stores',
+    speaker: 'You',
+    text: 'BAHAN KIMIA — the chemical store. Several stock bottles have been topped up, the new lines on their labels in a different pen. The levels don\'t match the log on the door.',
+    setsFlag: 'examined_stores',
+    choices: [{ text: 'Step back', next: null }],
+  }),
+  node({
+    id: 'daniel3_intro',
+    speaker: 'Daniel Wong',
+    text: "What are you doing in my makmal? The police said it's open again, not that students can wander around touching things.",
+    choices: daniel3Topics,
+  }),
+  node({ id: 'daniel3_more', speaker: 'Daniel Wong', text: 'What now?', choices: daniel3Topics }),
+  node({
+    id: 'daniel3_alibi',
+    speaker: 'Daniel Wong',
+    text: 'For the last time: here, all night, with my run. The logbook says so.',
+    givesClue: 'daniel_alibi',
+    choices: [back('daniel3_more'), leave],
+  }),
+  node({
+    id: 'daniel3_logbook',
+    speaker: 'Daniel Wong',
+    text: "…Everyone signs ahead when a run is stable. It's not a crime. It doesn't mean I left.",
+    setsFlag: 'daniel_admits_presign',
+    choices: [back('daniel3_more'), leave],
+  }),
+  node({
+    id: 'daniel3_stores',
+    speaker: 'Daniel Wong',
+    text: 'Rosli and his audits. Bottles get used and not logged — students are careless. That\'s all it is. Now get out of my lab.',
+    choices: [leave],
+  }),
+
+  // Dr. Rosli's office.
+  node({
+    id: 'rosli_desk',
+    speaker: 'You',
+    text: 'Dr. Rosli\'s desk, a ring from his tumbler still on the blotter. Under it, a folder: "Stores audit — Makmal 2". Pages of figures, one reagent circled MISSING, and a sticky note: "Report D.W. to the Dean — Thurs 9am."',
+    setsFlag: 'examined_rosli_office',
+    givesClue: 'audit_notes',
+    choices: [{ text: 'Step back', next: null }],
+  }),
+  node({
+    id: 'rosli_photo',
+    speaker: 'You',
+    text: 'A framed photo: a much younger Dr. Rosli in his robes at his UPM convocation. On the shelf, a row of chemistry journals, every one bookmarked.',
+    choices: [{ text: 'Step back', next: null }],
+  }),
+
+  // Dr. Priya's office.
+  node({
+    id: 'priya3_intro',
+    speaker: 'Dr. Priya Nair',
+    text: "Come in. I hear you've been asking questions around the faculty. Good. Somebody should.",
+    choices: priya3Topics,
+  }),
+  node({ id: 'priya3_more', speaker: 'Dr. Priya Nair', text: 'What else?', choices: priya3Topics }),
+  node({
+    id: 'priya3_call',
+    speaker: 'Dr. Priya Nair',
+    text: "Ten until eleven with Melbourne — here, it's still in my call history. Look for yourself: 9:58 to 11:02.",
+    setsFlag: 'checked_priya_call',
+    givesClue: 'video_call_record',
+    choices: [back('priya3_more'), leave],
+  }),
+  node({
+    id: 'priya3_argument',
+    speaker: 'Dr. Priya Nair',
+    text: 'In the courtyard, half past nine. We shouted at each other about that grant. It was the last thing I ever said to him.',
+    givesClue: 'priya_argument',
+    choices: [back('priya3_more'), leave],
+  }),
+  node({
+    id: 'priya3_theory',
+    speaker: 'Dr. Priya Nair',
+    text: 'Rosli had been auditing the Makmal 2 stores for weeks. If something was missing, he would have found it — and he would have gone straight to the Dean.',
+    choices: [back('priya3_more'), leave],
   }),
 ];
 
-export const DIALOGUE: Readonly<Record<string, DialogueNode>> = Object.fromEntries([...day1, ...day2]);
+export const DIALOGUE: Readonly<Record<string, DialogueNode>> = Object.fromEntries([...day1, ...day2, ...day3]);

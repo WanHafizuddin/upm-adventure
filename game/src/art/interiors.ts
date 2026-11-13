@@ -21,7 +21,13 @@ export type FurnitureKind =
   | 'cart'
   | 'labdoor'
   | 'motorcycle'
-  | 'busstop';
+  | 'busstop'
+  | 'labbench'
+  | 'fumehood'
+  | 'chemcabinet'
+  | 'officedesk'
+  | 'officedoor'
+  | 'stairs';
 
 /** Height of the back wall in every room. */
 export const WALL_H = 48;
@@ -46,6 +52,12 @@ export const FURNITURE: Readonly<Record<FurnitureKind, { block?: [number, number
   labdoor: { wall: true },
   motorcycle: { block: [26, 6] },
   busstop: { block: [6, 4] },
+  labbench: { block: [64, 10] },
+  fumehood: { block: [52, 10] },
+  chemcabinet: { block: [36, 8] },
+  officedesk: { block: [64, 10] },
+  officedoor: { wall: true },
+  stairs: { wall: true },
 };
 
 export function createInteriorSprites(scene: Phaser.Scene): void {
@@ -66,6 +78,12 @@ export function createInteriorSprites(scene: Phaser.Scene): void {
     labdoor,
     motorcycle,
     busstop,
+    labbench,
+    fumehood,
+    chemcabinet,
+    officedesk,
+    officedoor,
+    stairs,
   };
   for (const [kind, draw] of Object.entries(make)) draw().toTexture(scene, `f_${kind}`);
 }
@@ -102,12 +120,15 @@ export function roomTexture(spec: RoomSpec): PixelCanvas {
   const edge = mix(spec.wall, C.outline, 0.65);
   c.rect(0, 0, 6, spec.h, edge);
   c.rect(spec.w - 6, 0, 6, spec.h, edge);
+  const doorX = spec.doorX;
   for (let x = 0; x < spec.w; x++) {
-    if (Math.abs(x + 0.5 - spec.doorX) < DOOR_W / 2) continue;
+    if (doorX !== undefined && Math.abs(x + 0.5 - doorX) < DOOR_W / 2) continue;
     c.rect(x, spec.h - 8, 1, 8, edge);
   }
-  c.rect(spec.doorX - 16, spec.h - 14, 32, 6, 0x5a3a2a); // door mat
-  c.rect(spec.doorX - 16, spec.h - 14, 32, 1, 0x7a5236);
+  if (doorX !== undefined) {
+    c.rect(doorX - 16, spec.h - 14, 32, 6, 0x5a3a2a); // door mat
+    c.rect(doorX - 16, spec.h - 14, 32, 1, 0x7a5236);
+  }
   return c;
 }
 
@@ -368,6 +389,111 @@ function motorcycle(): PixelCanvas {
   m.rect(28, 9, 3, 3, 0xffe9a0); // headlamp
   m.outline(C.outline);
   return m;
+}
+
+function labbench(): PixelCanvas {
+  const b = new PixelCanvas(66, 36);
+  b.rect(1, 12, 64, 6, 0x2a2d36); // black epoxy top
+  b.rect(1, 12, 64, 1, 0x4a4e5c);
+  b.rect(1, 18, 64, 17, 0xc8ccd6); // cupboards
+  for (let x = 1; x < 64; x += 16) {
+    b.rect(x, 19, 15, 15, 0xb4b9c6);
+    b.rect(x + 7, 25, 2, 1, C.metal0);
+  }
+  // Glassware: flasks, a beaker, a rack of test tubes.
+  b.rect(6, 4, 4, 2, 0x8fd8e8);
+  b.ellipse(8, 9, 4, 3, 0x8fd8e8, 190);
+  b.rect(6, 9, 5, 2, 0x5fbf8a);
+  b.rect(18, 5, 6, 7, 0xb8e8f0);
+  b.rect(18, 8, 6, 4, 0xe8a0b8);
+  b.rect(30, 6, 14, 2, C.wood1);
+  for (let i = 0; i < 4; i++) b.rect(31 + i * 3, 2, 2, 8, [0xf2cf6b, 0x8cc8ff, 0xe86a9a, 0x9fe0a0][i]);
+  b.rect(50, 7, 10, 4, C.paper); // the logbook, open
+  b.rect(55, 7, 1, 4, C.paperShade);
+  b.rect(51, 8, 3, 1, C.ink);
+  b.rect(57, 8, 2, 1, C.ink);
+  b.outline(C.outline);
+  return b;
+}
+
+function fumehood(): PixelCanvas {
+  const f = new PixelCanvas(54, 60);
+  f.rect(1, 1, 52, 58, 0xb8bcc8);
+  f.rect(1, 1, 52, 4, 0x8a8fa0);
+  f.rect(5, 9, 44, 28, 0x2c3a48); // inside, behind the glass sash
+  f.rect(5, 9, 44, 1, 0x7fa8c0);
+  f.rect(10, 26, 6, 10, 0x8fd8e8);
+  f.rect(30, 22, 8, 14, 0xd8dde6);
+  f.rect(5, 37, 44, 3, C.metal1); // sash handle
+  f.rect(3, 42, 48, 16, 0x9aa0b0);
+  f.rect(24, 46, 6, 4, 0xd04a4a); // emergency stop
+  f.outline(C.outline);
+  return f;
+}
+
+function chemcabinet(): PixelCanvas {
+  const c = new PixelCanvas(38, 52);
+  c.rect(1, 1, 36, 50, 0x8a8fa0);
+  c.rect(1, 1, 36, 2, 0xa8adbd);
+  c.rect(4, 5, 30, 30, 0x2c3440); // glass doors
+  const bottles = [0x6a3a1a, 0xe8e8ee, 0x4a7fd0, 0x6a3a1a, 0x9fe0a0, 0xe8e8ee];
+  for (let row = 0; row < 2; row++) {
+    for (let i = 0; i < 6; i++) c.rect(6 + i * 5, 8 + row * 14, 3, 9, bottles[(i + row * 2) % bottles.length]);
+    c.rect(4, 18 + row * 14, 30, 1, 0x6a7080);
+  }
+  c.rect(18, 5, 1, 30, 0x6a7080);
+  c.rect(4, 38, 30, 11, 0x7a7f90);
+  c.rect(13, 39, 12, 9, 0xeeeeef); // hazard sign
+  c.rect(17, 40, 4, 7, 0xd04a4a);
+  c.outline(C.outline);
+  return c;
+}
+
+function officedesk(): PixelCanvas {
+  const d = new PixelCanvas(66, 36);
+  d.rect(40, 0, 18, 12, C.metal0); // monitor
+  d.rect(41, 1, 16, 9, 0x6fd6e8);
+  d.rect(41, 1, 16, 1, 0xb8f2ff);
+  d.rect(48, 12, 2, 2, C.metal1);
+  d.rect(1, 13, 64, 8, C.wood2);
+  d.rect(1, 13, 64, 1, mix(C.wood2, 0xffffff, 0.2));
+  d.rect(6, 15, 14, 4, C.paper); // papers and a folder
+  d.rect(9, 14, 10, 3, 0xc0392b);
+  d.ellipse(28, 17, 3, 2, 0x5a3a28); // coffee ring
+  d.ellipse(28, 17, 2, 1, C.wood2);
+  d.rect(42, 15, 14, 3, C.metal1); // keyboard
+  d.rect(1, 21, 64, 14, C.wood1);
+  d.rect(4, 23, 18, 11, C.wood0); // drawers
+  d.rect(12, 28, 3, 1, C.metal2);
+  d.outline(C.outline);
+  return d;
+}
+
+function officedoor(): PixelCanvas {
+  const d = new PixelCanvas(30, 36);
+  d.rect(0, 0, 30, 36, C.stone1);
+  d.rect(3, 3, 24, 33, C.door1);
+  d.rect(6, 6, 18, 12, C.door2);
+  d.rect(6, 21, 18, 12, C.door2);
+  d.rect(7, 7, 16, 10, C.door1);
+  d.rect(7, 22, 16, 10, C.door1);
+  d.rect(22, 19, 2, 2, C.lampGlass);
+  d.outline(C.outline);
+  return d;
+}
+
+function stairs(): PixelCanvas {
+  const s = new PixelCanvas(46, 48);
+  for (let i = 0; i < 8; i++) {
+    const y = 44 - i * 5;
+    s.rect(4 + i, y, 38 - i * 2, 5, i % 2 === 0 ? C.stone1 : C.stone0);
+    s.rect(4 + i, y, 38 - i * 2, 1, mix(C.stone1, 0xffffff, 0.25));
+  }
+  s.rect(1, 6, 2, 42, C.metal1); // handrails
+  s.rect(43, 6, 2, 42, C.metal1);
+  s.rect(1, 6, 44, 2, C.metal2);
+  s.outline(C.outline);
+  return s;
 }
 
 function busstop(): PixelCanvas {

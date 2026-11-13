@@ -10,7 +10,7 @@
 
 **Spec:** [2026-09-27-campus-mystery-game-design.md](../specs/2026-09-27-campus-mystery-game-design.md) (revised 2026-11-13: side-view 2D, web stack).
 
-**Status (2026-11-13):** Tasks 1–10 implemented and play-tested (Task 8 switched to top-down, Task 9 built the full Day 1, Task 10 added Day 2 and the UPM setting); 49 unit tests pass; `npm run build` succeeds. Nothing committed yet. Where the build differs from the steps below, the notes in each task say so.
+**Status (2026-11-13):** Tasks 1–11 implemented and play-tested (Task 8 switched to top-down, Task 9 built the full Day 1, Task 10 added Day 2 and the UPM setting, Task 11 added Day 3); 51 unit tests pass; `npm run build` succeeds. Nothing committed yet. Where the build differs from the steps below, the notes in each task say so.
 
 **Supersedes:** [2026-09-27-campus-mystery-vertical-slice.md](2026-09-27-campus-mystery-vertical-slice.md) (the Unity plan).
 
@@ -240,6 +240,18 @@ Implements Day 2 from [the case design](../specs/2026-11-13-campus-mystery-case-
 - [ ] **Step 1: Tests first.** `gameState.test.ts`: starts on day 1; `isDayComplete()` checks the current day's goals; `advanceDay()` moves to day 2 and notifies. `days.test.ts`: no `days` → available; `[2]` → not on day 1, yes on day 2. `content.test.ts`: every reference resolves (nodes, clues, looks, exit targets, link ends), and playing each day in order using only what's available that day completes it.
 - [ ] **Step 2:** Run, see them fail. **Step 3:** Implement. **Step 4:** Run, see them pass.
 - [ ] **Step 5:** Play-test: finish Day 1, head home, see the Day 2 card, visit all three rooms and back, meet the three witnesses, make the Day 2 links, see Day 2 complete; returning to a room doesn't bring picked-up clues back.
+
+### Task 11: Day 3 — Makmal 2 and the upstairs offices
+
+Implements Day 3 from the case design: Daniel's alibi breaks and Priya is cleared.
+
+**Content:** four new rooms in `locations.ts` — Makmal 2 (`lab`, through the lab door on the ground floor), Fakulti Sains Aras 1 (`upper`, up the stairs), Dr. Rosli's office and Dr. Priya's office (doors off Aras 1). Daniel is in the lab, Priya in her office. Clues: Pre-signed Logbook (read the logbook in the lab), Rosli's Audit Notes (search his desk), Video Call Record (Priya shows you her call history). Links: Pre-signed Logbook ↔ Daniel's Alibi (`daniel_alibi_broken`), Video Call Record ↔ The Argument (`priya_cleared`), Rosli's Audit Notes ↔ Daniel (`daniel_motive`, optional today). Objectives: read the logbook, search Rosli's office, ask Priya about her call, and the two board links.
+
+**Code:** new furniture (lab bench, fume hood, chemical store, office desk, office door, stairs); rooms may have no bottom doorway (`doorX` optional) when you arrive by stairs or an inner door. The Day 2 "look at Makmal 2" spot becomes the lab's exit, closed until Day 3.
+
+- [ ] **Step 1:** Data first; `content.test.ts` must pass for Days 1–3 (reachability, no clue a day needs but can't offer, playable in order).
+- [ ] **Step 2:** Art and the optional doorway.
+- [ ] **Step 3:** Play-test Day 3: reach all four rooms and back, collect the three clues, make the links, see Day 3 complete; check the rooms look right.
 
 ## Later (not this plan)
 
