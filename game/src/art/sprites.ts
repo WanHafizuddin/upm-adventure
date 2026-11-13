@@ -1,5 +1,6 @@
 import type * as Phaser from 'phaser';
 import { BUILDING_H, DOOR_X, MAP_H, MAP_W, PLAZA, isPath, plazaDistance } from '../scenes/courtyardLayout';
+import type { Look } from './look';
 import { C } from './palette';
 import { PixelCanvas, mix, rng, type Rgb } from './pixelCanvas';
 
@@ -8,7 +9,11 @@ import { PixelCanvas, mix, rng, type Rgb } from './pixelCanvas';
 export const LIT_WINDOWS = [1, 5, 6]; // which window bays (0–7) have their lights on
 export const WINDOW_BAY_X = (bay: number) => 48 + bay * 96;
 
-export function createSprites(scene: Phaser.Scene): void {
+/**
+ * Registers every texture. Characters come out as `<id>_<facing>_<pose>`:
+ * the player gets poses 0–2 (standing and two walking steps), everyone else pose 0.
+ */
+export function createSprites(scene: Phaser.Scene, player: Look, npcs: Readonly<Record<string, Look>>): void {
   ground().toTexture(scene, 'ground');
   building().toTexture(scene, 'building');
   [11, 23, 37].forEach((seed, i) => tree(seed).toTexture(scene, `tree_${i}`));
@@ -25,19 +30,20 @@ export function createSprites(scene: Phaser.Scene): void {
   shadow(40, 12).toTexture(scene, 'shadow_big');
   shadow(16, 6).toTexture(scene, 'shadow_small');
   firefly().toTexture(scene, 'firefly');
+  accessCard().toTexture(scene, 'card');
+  tumbler().toTexture(scene, 'tumbler');
 
-  const player: Look = { hair: C.hairDark, top: 0x2f7f86, bottom: 0x2f3a5e, shoes: 0xd9d4c8, bag: 0x8b3a3a };
-  const suspect: Look = { hair: C.hairBrown, top: 0xb8862f, bottom: 0x2a2638, shoes: 0x2b2224, glasses: true };
-  for (const facing of ['down', 'up', 'right'] as const) {
-    for (const pose of [0, 1, 2] as const) {
-      const p = character(player, facing, pose);
-      p.toTexture(scene, `player_${facing}_${pose}`);
-      if (facing === 'right') p.flipped().toTexture(scene, `player_left_${pose}`);
+  const drawCharacter = (id: string, look: Look, poses: ReadonlyArray<0 | 1 | 2>) => {
+    for (const facing of ['down', 'up', 'right'] as const) {
+      for (const pose of poses) {
+        const c = character(look, facing, pose);
+        c.toTexture(scene, `${id}_${facing}_${pose}`);
+        if (facing === 'right') c.flipped().toTexture(scene, `${id}_left_${pose}`);
+      }
     }
-    const s = character(suspect, facing, 0);
-    s.toTexture(scene, `suspect_${facing}_0`);
-    if (facing === 'right') s.flipped().toTexture(scene, 'suspect_left_0');
-  }
+  };
+  drawCharacter('player', player, [0, 1, 2]);
+  for (const [id, look] of Object.entries(npcs)) drawCharacter(id, look, [0]);
 }
 
 // --- Ground ---------------------------------------------------------------
@@ -487,6 +493,31 @@ function marker(n: number): PixelCanvas {
   return m;
 }
 
+function accessCard(): PixelCanvas {
+  const c = new PixelCanvas(11, 8);
+  c.rect(1, 1, 9, 6, 0xe6e8ee);
+  c.rect(1, 1, 9, 2, 0x3c6fb0);
+  c.rect(2, 4, 2, 2, C.skin1); // tiny photo
+  c.rect(5, 4, 4, 1, C.ink);
+  c.rect(1, 6, 9, 1, C.paperShade);
+  c.outline(C.outline);
+  return c;
+}
+
+/** Dr. Rosli's tumbler lying on its side in a small pool of spilled coffee. */
+function tumbler(): PixelCanvas {
+  const t = new PixelCanvas(18, 10);
+  t.rect(3, 2, 9, 4, C.metal2);
+  t.rect(3, 2, 9, 1, mix(C.metal2, 0xffffff, 0.35));
+  t.rect(3, 5, 9, 1, C.metal1);
+  t.rect(12, 2, 2, 4, C.metal0);
+  t.outline(C.outline);
+  t.eachInEllipse(10, 6.5, 7, 3, (x, y) => {
+    if (!t.filled(x, y)) t.px(x, y, 0x3b2618, 200);
+  });
+  return t;
+}
+
 function shadow(w: number, h: number): PixelCanvas {
   const s = new PixelCanvas(w, h);
   s.ellipse(w / 2, h / 2, w / 2, h / 2, C.outline, 90);
@@ -507,21 +538,13 @@ function firefly(): PixelCanvas {
 
 // --- Characters ------------------------------------------------------------
 
-interface Look {
-  hair: Rgb;
-  top: Rgb;
-  bottom: Rgb;
-  shoes: Rgb;
-  bag?: Rgb;
-  glasses?: boolean;
-}
-
 /** A 16×26 chibi character. pose 0 = standing, 1 and 2 = the two walking steps. */
 function character(look: Look, facing: 'down' | 'up' | 'right', pose: 0 | 1 | 2): PixelCanvas {
   const c = new PixelCanvas(16, 26);
   const dark = (col: Rgb) => mix(col, C.outline, 0.35);
   const light = (col: Rgb) => mix(col, 0xffffff, 0.18);
   const armSwing = pose === 0 ? 0 : pose === 1 ? -1 : 1;
+  const body = look.coat ?? look.top;
 
   // Legs and shoes.
   if (facing === 'right') {
@@ -539,19 +562,26 @@ function character(look: Look, facing: 'down' | 'up' | 'right', pose: 0 | 1 | 2)
     c.rect(8, 21 + rightLen, 3, 1, look.shoes);
   }
 
-  // Torso and arms.
+  // Torso and arms. A coat hangs lower, over the top of the legs.
+  const torsoH = look.coat ? 9 : 7;
   if (facing === 'right') {
     if (look.bag) c.rect(3, 14, 3, 6, look.bag);
-    c.rect(5, 14, 6, 7, look.top);
-    c.rect(5, 14, 6, 1, light(look.top));
-    c.rect(7, 15 + armSwing, 2, 5, dark(look.top));
+    c.rect(5, 14, 6, torsoH, body);
+    c.rect(5, 14, 6, 1, light(body));
+    if (look.coat) c.rect(10, 14, 1, 4, look.top);
+    c.rect(7, 15 + armSwing, 2, 5, dark(body));
     c.rect(7, 20 + armSwing, 2, 1, C.skin0);
   } else {
-    c.rect(4, 14, 8, 7, look.top);
-    c.rect(4, 14, 1, 7, light(look.top));
-    c.rect(11, 14, 1, 7, dark(look.top));
-    c.rect(2, 15 + armSwing, 2, 5, look.top);
-    c.rect(12, 15 - armSwing, 2, 5, dark(look.top));
+    c.rect(4, 14, 8, torsoH, body);
+    c.rect(4, 14, 1, torsoH, light(body));
+    c.rect(11, 14, 1, torsoH, dark(body));
+    if (look.coat && facing === 'down') {
+      c.rect(7, 14, 2, 5, look.top); // shirt showing between the lapels
+      c.px(6, 14, dark(body));
+      c.px(9, 14, dark(body));
+    }
+    c.rect(2, 15 + armSwing, 2, 5, body);
+    c.rect(12, 15 - armSwing, 2, 5, dark(body));
     c.rect(2, 20 + armSwing, 2, 1, C.skin0);
     c.rect(12, 20 - armSwing, 2, 1, C.skin1);
     if (look.bag && facing === 'up') {
@@ -564,16 +594,40 @@ function character(look: Look, facing: 'down' | 'up' | 'right', pose: 0 | 1 | 2)
     }
   }
 
-  // Head and hair.
+  // Long hair falls over the shoulders (or down the back).
+  if (look.longHair && look.tudung === undefined) {
+    if (facing === 'up') c.rect(4, 12, 8, 7, look.hair);
+    else if (facing === 'right') c.rect(4, 11, 3, 8, look.hair);
+    else {
+      c.rect(3, 12, 2, 6, look.hair);
+      c.rect(11, 12, 2, 6, look.hair);
+    }
+  }
+
+  // Head, then hair or a tudung over it.
+  const cover = look.tudung ?? look.hair;
   c.ellipse(8, 8, 6.5, 6.5, C.skin0);
   c.eachInEllipse(8, 8, 6.5, 6.5, (x, y, nx, ny) => {
-    let hair = false;
-    if (facing === 'up') hair = ny < 0.75;
-    else if (facing === 'down') hair = ny < -0.15 || (Math.abs(nx) > 0.75 && ny < 0.45);
-    else hair = ny < -0.2 || (nx < 0.1 && ny < 0.55);
-    if (hair) c.px(x, y, ny < -0.6 && nx < 0 ? light(look.hair) : look.hair);
+    let covered: boolean;
+    if (look.tudung !== undefined) {
+      if (facing === 'up') covered = true;
+      else if (facing === 'down') covered = ny < -0.3 || Math.abs(nx) > 0.55;
+      else covered = nx < 0.3 || ny < -0.35;
+    } else if (facing === 'up') covered = ny < 0.75;
+    else if (facing === 'down') covered = ny < -0.15 || (Math.abs(nx) > 0.75 && ny < 0.45);
+    else covered = ny < -0.2 || (nx < 0.1 && ny < 0.55);
+    if (covered) c.px(x, y, ny < -0.6 && nx < 0 ? light(cover) : cover);
     else if (nx > 0.55 || ny > 0.6) c.px(x, y, C.skin1);
   });
+  if (look.tudung !== undefined) {
+    // The scarf drapes over the shoulders.
+    if (facing === 'up') c.rect(3, 12, 10, 5, look.tudung);
+    else if (facing === 'right') c.rect(4, 13, 7, 3, look.tudung);
+    else {
+      c.rect(3, 13, 10, 3, look.tudung);
+      c.rect(3, 13, 10, 1, light(look.tudung));
+    }
+  }
   if (facing === 'down') {
     c.rect(5, 9, 1, 2, C.outline);
     c.rect(10, 9, 1, 2, C.outline);

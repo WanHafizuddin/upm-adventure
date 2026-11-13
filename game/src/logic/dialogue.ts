@@ -14,6 +14,8 @@ export interface DialogueNode {
   text: string;
   /** Flag turned on when the player reaches this node. */
   setsFlag?: string;
+  /** Id of a clue the player gains when they reach this node (e.g. a statement). */
+  givesClue?: string;
   choices: DialogueChoice[];
 }
 

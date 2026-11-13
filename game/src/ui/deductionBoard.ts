@@ -1,17 +1,19 @@
+import type { Person } from '../data/day1';
 import type { GameState } from '../logic/gameState';
-import type { Suspect } from '../data/day1';
 
 interface BoardCard {
   id: string;
   name: string;
-  kind: 'Clue' | 'Suspect';
-  detail?: string;
+  kind: 'Clue' | 'Suspect' | 'Victim';
+  detail: string;
 }
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
+const HINT = 'Hover a card to read it. Drag one card onto another to connect them.';
 
 /**
- * Full-screen board: clues on the left, suspects on the right.
+ * Full-screen board. With a few clues: clues left, people right. With many: people in the middle and
+ * clues on both sides, so every string runs clue-to-person without passing behind another card.
  * Drag from one card onto another to propose a connection.
  */
 export class DeductionBoard {
@@ -19,13 +21,14 @@ export class DeductionBoard {
   private readonly area: HTMLElement;
   private readonly svg: SVGSVGElement;
   private readonly emptyHint: HTMLElement;
+  private readonly detail: HTMLElement;
   private dragFrom: HTMLElement | null = null;
   private dragLine: SVGLineElement | null = null;
 
   constructor(
     root: HTMLElement,
     private readonly state: GameState,
-    private readonly suspects: readonly Suspect[],
+    private readonly people: readonly Person[],
     private readonly toast: (text: string) => void,
   ) {
     this.el = document.createElement('section');
@@ -34,15 +37,17 @@ export class DeductionBoard {
     this.el.innerHTML = `
       <header>
         <h2>Deduction Board</h2>
-        <p class="hint">Drag a card onto another to connect them · Tab or Esc to close</p>
+        <p class="hint">Tab or Esc to close</p>
       </header>
       <div class="board-area">
         <svg class="board-lines"></svg>
         <p class="board-empty">Collect clues to add them to the board.</p>
-      </div>`;
+      </div>
+      <p class="board-detail"></p>`;
     this.area = this.el.querySelector('.board-area')!;
     this.svg = this.el.querySelector('svg')!;
     this.emptyHint = this.el.querySelector('.board-empty')!;
+    this.detail = this.el.querySelector('.board-detail')!;
     root.appendChild(this.el);
 
     window.addEventListener('pointermove', (e) => this.onPointerMove(e));
@@ -58,6 +63,7 @@ export class DeductionBoard {
 
   open(): void {
     this.el.hidden = false;
+    this.detail.textContent = HINT;
     this.render();
   }
 
@@ -66,41 +72,42 @@ export class DeductionBoard {
     this.el.hidden = true;
   }
 
-  private cards(): { clues: BoardCard[]; suspects: BoardCard[] } {
-    return {
-      clues: this.state.inventory
-        .all()
-        .map((c) => ({ id: c.id, name: c.name, kind: 'Clue' as const, detail: c.description })),
-      suspects: this.suspects.map((s) => ({ id: s.id, name: s.name, kind: 'Suspect' as const })),
-    };
-  }
-
   private render(): void {
     this.area.querySelectorAll('.card').forEach((card) => card.remove());
-    const { clues, suspects } = this.cards();
+    const clues: BoardCard[] = this.state.inventory
+      .all()
+      .map((c) => ({ id: c.id, name: c.name, kind: 'Clue', detail: c.description }));
+    const people: BoardCard[] = this.people.map((p) => ({ id: p.id, name: p.name, kind: p.kind, detail: p.role }));
     this.emptyHint.hidden = clues.length > 0;
 
-    const place = (list: BoardCard[], column: 'left' | 'right') =>
-      list.forEach((card, index) => {
-        const el = document.createElement('div');
-        el.className = `card ${card.kind.toLowerCase()} ${column}`;
-        el.dataset.id = card.id;
-        el.dataset.name = card.name;
-        el.style.top = `${18 + index * 26}%`;
-        el.innerHTML = `<span class="kind">${card.kind}</span><strong></strong>`;
-        el.querySelector('strong')!.textContent = card.name;
-        if (card.detail) {
-          const detail = document.createElement('small');
-          detail.textContent = card.detail;
-          el.appendChild(detail);
-        }
-        el.addEventListener('pointerdown', (e) => this.startDrag(e, el));
-        this.area.appendChild(el);
-      });
-
-    place(clues, 'left');
-    place(suspects, 'right');
+    // Spread cards evenly down the board, however many there are.
+    const step = (count: number) => Math.min(23, 88 / Math.max(count, 1));
+    const split = clues.length > 4;
+    const clueRows = Math.ceil(clues.length / (split ? 2 : 1));
+    clues.forEach((card, i) => {
+      const column = split && i % 2 === 1 ? 'right' : 'left';
+      const row = split ? Math.floor(i / 2) : i;
+      this.addCard(card, column, 3 + row * step(clueRows));
+    });
+    people.forEach((card, i) => this.addCard(card, split ? 'center' : 'right', 3 + i * step(people.length)));
     this.redrawLines();
+  }
+
+  private addCard(card: BoardCard, column: string, topPercent: number): void {
+    const el = document.createElement('div');
+    el.className = `card ${card.kind.toLowerCase()} ${column}`;
+    el.dataset.id = card.id;
+    el.dataset.name = card.name;
+    el.style.top = `${topPercent}%`;
+    const kind = document.createElement('span');
+    kind.className = 'kind';
+    kind.textContent = card.kind;
+    const name = document.createElement('strong');
+    name.textContent = card.name;
+    el.append(kind, name);
+    el.addEventListener('pointerenter', () => (this.detail.textContent = `${card.name}: ${card.detail}`));
+    el.addEventListener('pointerdown', (e) => this.startDrag(e, el));
+    this.area.appendChild(el);
   }
 
   /** Draws a line for every pair already connected, and marks those cards. */
@@ -112,8 +119,7 @@ export class DeductionBoard {
         if (a.dataset.id! < b.dataset.id! && this.state.validator.isConnected(a.dataset.id!, b.dataset.id!)) {
           a.classList.add('connected');
           b.classList.add('connected');
-          const line = this.makeLine('made');
-          this.setLine(line, this.centerOf(a), this.centerOf(b));
+          this.setLine(this.makeLine('made'), this.centerOf(a), this.centerOf(b));
         }
       }
     }
@@ -151,10 +157,10 @@ export class DeductionBoard {
     }
     const result = this.state.connect(idA, idB);
     if (result.valid) {
-      this.toast(`Connected: ${a.dataset.name} ↔ ${b.dataset.name}`);
+      this.toast(`✓ ${result.insight ?? `Connected: ${a.dataset.name} ↔ ${b.dataset.name}`}`);
       this.redrawLines();
     } else {
-      this.toast("These don't connect.");
+      this.toast('No connection you can prove yet.');
     }
   }
 

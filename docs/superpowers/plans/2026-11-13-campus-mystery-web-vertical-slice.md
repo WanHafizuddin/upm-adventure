@@ -10,7 +10,7 @@
 
 **Spec:** [2026-09-27-campus-mystery-game-design.md](../specs/2026-09-27-campus-mystery-game-design.md) (revised 2026-11-13: side-view 2D, web stack).
 
-**Status (2026-11-13):** Tasks 1–8 implemented and play-tested (Task 8 switched to top-down); 35 unit tests pass; `npm run build` succeeds. Nothing committed yet. Where the build differs from the steps below, the notes in each task say so.
+**Status (2026-11-13):** Tasks 1–9 implemented and play-tested (Task 8 switched to top-down, Task 9 built the full Day 1); 43 unit tests pass; `npm run build` succeeds. Nothing committed yet. Where the build differs from the steps below, the notes in each task say so.
 
 **Supersedes:** [2026-09-27-campus-mystery-vertical-slice.md](2026-09-27-campus-mystery-vertical-slice.md) (the Unity plan).
 
@@ -196,7 +196,29 @@ The developer asked for a top-down view in the style of a top-down pixel-art ref
   Depth = each object's ground y, so things lower on screen draw in front. Ambient light is dim blue-violet. Interaction reach is 24 px, measured from the player's feet.
 - [ ] **Step 7:** Play-test: eight-way movement with no faster diagonals; can't walk through the building, fountain, tree trunks, lamp posts, benches or tape; can walk behind a tree canopy; camera stops at all four edges; the Task 7 checklist still passes; the night/lantern look reads clearly.
 
+### Task 9: Full Day 1 — the real case and all three suspects
+
+Builds Day 1 as the spec describes it, using the case in [the case design](../specs/2026-11-13-campus-mystery-case-design.md).
+
+**Files:**
+- Modify: `game/src/logic/dialogue.ts` (`givesClue` on nodes), `game/src/logic/deduction.ts` (`insight` on links and results), `game/src/logic/gameState.ts` (`enterNode`)
+- Replace: `game/src/data/day1.ts` (clues, suspects, victim, dialogue, scene placements, links, Day 1 goals)
+- Create: `game/src/data/day1.test.ts` (content checks)
+- Modify: `game/src/art/sprites.ts` (per-character looks incl. tudung and long hair; access card and tumbler props), `game/src/scenes/Day1Scene.ts` (NPCs, floor clues and examine spots from data), `game/src/ui/*` (clue toasts from dialogue, board with victim card and a detail strip)
+
+**Produces:**
+- `DialogueNode.givesClue?: string`
+- `DeductionLink.insight?: string`; `ConnectionResult.insight?: string` on valid results
+- `GameState.enterNode(node: DialogueNode, clues: Readonly<Record<string, Clue>>): Clue | undefined`. Sets the node's flag and picks up its clue; returns the clue only the first time it's gained.
+- `day1.ts` exports `CLUES`, `PEOPLE` (suspects + victim), `NPCS` (who stands where), `FLOOR_CLUES`, `EXAMINE_SPOTS`, `DIALOGUE`, `LINKS`, `DAY1_REQUIRED`
+
+- [ ] **Step 1: Tests first.** `gameState.test.ts`: entering a node with `setsFlag` and `givesClue` sets the flag, adds the clue, returns it; entering again returns `undefined`. `deduction.test.ts`: a valid connect returns the link's `insight`. `day1.test.ts`: every `next` names a real node; every `givesClue`/`requiresClue`/link clue names a real clue; every link target is a person; every NPC and examine spot starts at a real node; every Day 1 goal flag can be set by some node or link; Day 1 can be completed by following the data (simulate: enter every reachable node, make every link, check `isDay1Complete`).
+- [ ] **Step 2:** Run, see them fail. **Step 3:** Implement. **Step 4:** Run, see them pass.
+- [ ] **Step 5:** Art and scene: Farah by the west lamp, Daniel near the faculty door, Priya by the south-east bench; torn note by the tape, lab access card in the grass by the west hedge, tumbler visible inside the tape; examining the tape gives the Coffee Tumbler.
+- [ ] **Step 6:** Board: suspects and the victim on the right, clues on the left in up to two columns; hovering a card shows its full text in a strip at the bottom; a valid link toasts its insight; an invalid one says "No connection you can prove yet."
+- [ ] **Step 7:** Play-test: meet all three, examine the scene, collect all six Day 1 clues, make all four links in either direction, and Day 1 completes only after the five goals; the board stays readable with every Day 1 card on it.
+
 ## Later (not this plan)
 
 - More art: walk-cycle animation frames, NPC idle animation, more prop variety. Optionally swap generated art for a hand-drawn or commissioned pack.
-- Doors and more rooms, Days 2–5 data, the chapter system, the accusation scene and endings.
+- Doors and more rooms, Days 2–5 data (see the case design), the chapter system, the accusation scene and endings.

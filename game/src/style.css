@@ -189,9 +189,9 @@ body {
 
 .board-empty {
   position: absolute;
-  left: 8%;
-  top: 18%;
-  max-width: 34%;
+  left: 3%;
+  top: 6%;
+  max-width: 50%;
   margin: 0;
   font: italic 16px var(--serif);
   color: var(--muted);
@@ -199,8 +199,8 @@ body {
 
 .card {
   position: absolute;
-  width: min(300px, 34%);
-  padding: 10px 14px;
+  width: 27%;
+  padding: 8px 12px;
   background: #e9e0c9;
   color: #22201b;
   border: 1px solid #b9ad8d;
@@ -210,15 +210,24 @@ body {
 }
 
 .card.left {
-  left: 8%;
+  left: 3%;
+}
+
+.card.center {
+  left: 36.5%;
 }
 
 .card.right {
-  right: 8%;
+  right: 3%;
 }
 
 .card.suspect {
   background: #d8d3c6;
+}
+
+.card.victim {
+  background: #cfc6c6;
+  border-left: 4px solid #8e2b2b;
 }
 
 .card .kind {
@@ -231,15 +240,19 @@ body {
 
 .card strong {
   display: block;
-  font: 18px var(--serif);
+  font: 17px var(--serif);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.card small {
-  display: block;
-  margin-top: 4px;
-  font-size: 13px;
-  line-height: 1.35;
-  color: #4a463c;
+.board-detail {
+  min-height: 2.8em;
+  margin: 10px 0 0;
+  padding-top: 10px;
+  border-top: 1px solid var(--edge);
+  font: 15px/1.4 var(--serif);
+  color: var(--ink);
 }
 
 .card.dragging {

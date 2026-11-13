@@ -1,12 +1,12 @@
 import * as Phaser from 'phaser';
 import './style.css';
-import { DAY1_REQUIRED, DIALOGUE, LINKS, SUSPECTS } from './data/day1';
+import { CLUES, DAY1_REQUIRED, DIALOGUE, LINKS, PEOPLE } from './data/day1';
 import { GameState } from './logic/gameState';
 import { Day1Scene } from './scenes/Day1Scene';
 import { Overlays } from './ui/overlays';
 
 const state = new GameState(LINKS, DAY1_REQUIRED);
-const overlays = new Overlays(document.getElementById('ui')!, state, { dialogue: DIALOGUE, suspects: SUSPECTS });
+const overlays = new Overlays(document.getElementById('ui')!, state, { dialogue: DIALOGUE, clues: CLUES, people: PEOPLE });
 
 const game = new Phaser.Game({
   type: Phaser.WEBGL, // lighting needs WebGL

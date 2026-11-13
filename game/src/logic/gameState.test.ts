@@ -33,6 +33,17 @@ describe('GameState', () => {
     expect(listener).toHaveBeenCalledTimes(3);
   });
 
+  it('applies a dialogue node: sets its flag and hands over its clue once', () => {
+    const state = makeState();
+    const note = { id: 'torn_note', name: 'Torn Note', description: '' };
+    const node = { id: 'n', speaker: 'X', text: '', setsFlag: 'met_x', givesClue: 'torn_note', choices: [] };
+
+    expect(state.enterNode(node, { torn_note: note })).toBe(note);
+    expect(state.flags.get('met_x')).toBe(true);
+    expect(state.inventory.has('torn_note')).toBe(true);
+    expect(state.enterNode(node, { torn_note: note })).toBeUndefined();
+  });
+
   it('stays quiet when nothing actually changed', () => {
     const state = makeState();
     const note = { id: 'torn_note', name: 'Torn Note', description: '' };

@@ -1,4 +1,5 @@
 import { isChoiceAvailable, resolveChoice, type DialogueNode } from '../logic/dialogue';
+import type { Clue } from '../logic/clues';
 import type { GameState } from '../logic/gameState';
 
 /** The conversation panel along the bottom of the screen. */
@@ -13,6 +14,8 @@ export class DialogueBox {
     root: HTMLElement,
     private readonly state: GameState,
     private readonly nodes: Readonly<Record<string, DialogueNode>>,
+    private readonly clues: Readonly<Record<string, Clue>>,
+    private readonly toast: (text: string) => void,
   ) {
     this.el = document.createElement('section');
     this.el.className = 'panel dialogue';
@@ -50,7 +53,8 @@ export class DialogueBox {
 
   private show(node: DialogueNode): void {
     this.current = node;
-    if (node.setsFlag) this.state.setFlag(node.setsFlag);
+    const gained = this.state.enterNode(node, this.clues);
+    if (gained) this.toast(`New clue: ${gained.name}`);
 
     this.speakerEl.textContent = node.speaker;
     this.textEl.textContent = node.text;

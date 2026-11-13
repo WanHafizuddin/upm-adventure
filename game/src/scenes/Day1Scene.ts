@@ -1,7 +1,6 @@
 import * as Phaser from 'phaser';
 import { LIT_WINDOWS, WINDOW_BAY_X, createSprites } from '../art/sprites';
-import { ALIBI_STATEMENT, SUSPECT_A, SUSPECT_A_START, TORN_NOTE } from '../data/day1';
-import type { Clue } from '../logic/clues';
+import { CLUES, EXAMINE_SPOTS, FLOOR_CLUES, NPCS, PEOPLE, PLAYER_LOOK, type FloorClue, type NpcSpec } from '../data/day1';
 import type { GameState } from '../logic/gameState';
 import { pickNearest } from '../logic/interaction';
 import { facingFor, moveVector, type Facing } from '../logic/movement';
@@ -50,15 +49,23 @@ export class Day1Scene extends Phaser.Scene {
   }
 
   create(): void {
-    createSprites(this);
+    createSprites(this, PLAYER_LOOK, Object.fromEntries(NPCS.map((n) => [n.id, n.look])));
     this.lights.enable().setAmbientColor(AMBIENT);
     this.physics.world.setBounds(0, 0, MAP_W, MAP_H);
 
     this.buildCourtyard();
     this.buildCrimeScene();
-    this.buildSuspect();
-    this.addClue(TORN_NOTE, 500, 368);
-    this.addClue(ALIBI_STATEMENT, 560, 446);
+    NPCS.forEach((npc) => this.addNpc(npc));
+    FLOOR_CLUES.forEach((placed) => this.addFloorClue(placed));
+    for (const spot of EXAMINE_SPOTS) {
+      this.interactables.push({
+        x: spot.x,
+        y: spot.y,
+        label: spot.label,
+        promptY: spot.y - 30,
+        use: () => this.overlays.openDialogue(spot.startNode),
+      });
+    }
     this.buildPlayer(DOOR_X, 520);
     this.addFireflies();
 
@@ -91,6 +98,7 @@ export class Day1Scene extends Phaser.Scene {
       one: kb.addKey(K.ONE),
       two: kb.addKey(K.TWO),
       three: kb.addKey(K.THREE),
+      four: kb.addKey(K.FOUR),
     };
   }
 
@@ -104,6 +112,7 @@ export class Day1Scene extends Phaser.Scene {
       if (JustDown(k.one)) this.overlays.chooseNumber(1);
       if (JustDown(k.two)) this.overlays.chooseNumber(2);
       if (JustDown(k.three)) this.overlays.chooseNumber(3);
+      if (JustDown(k.four)) this.overlays.chooseNumber(4);
     }
     // Read E even while blocked, so a press during dialogue doesn't fire after it closes.
     const interactPressed = JustDown(k.e);
@@ -213,31 +222,37 @@ export class Day1Scene extends Phaser.Scene {
 
   private buildCrimeScene(): void {
     this.prop('tape', 512, 352, { block: [100, 34], blockLift: 2 });
-    this.prop('briefcase', 526, 336);
+    this.prop('briefcase', 534, 340);
+    this.prop('tumbler', 500, 334);
     this.prop('marker_1', 486, 332);
     this.prop('marker_2', 542, 324);
   }
 
-  private buildSuspect(): void {
-    const x = 250;
-    const y = 302;
-    this.add.image(x, y, 'shadow_small').setOrigin(0.5, 0.65).setDepth(-5000);
-    const suspect = this.prop('suspect_down_0', x, y, { block: [10, 6] });
+  private addNpc(npc: NpcSpec): void {
+    const person = PEOPLE.find((p) => p.id === npc.id);
+    // "Farah", "Daniel", "Dr. Priya": short enough for the prompt.
+    const name = person?.name ?? npc.id;
+    const shortName = name.startsWith('Dr. ') ? name.split(' ').slice(0, 2).join(' ') : name.split(' ')[0];
+    this.add.image(npc.x, npc.y, 'shadow_small').setOrigin(0.5, 0.65).setDepth(-5000);
+    const sprite = this.prop(`${npc.id}_${npc.facing}_0`, npc.x, npc.y, { block: [10, 6] });
     this.interactables.push({
-      x,
-      y,
-      label: `Talk to ${SUSPECT_A.name}`,
-      promptY: y - 28,
+      x: npc.x,
+      y: npc.y,
+      label: `Talk to ${shortName}`,
+      promptY: npc.y - 28,
       use: () => {
-        const facing = facingFor({ x: this.player.x - x, y: this.player.y - y }, 'down');
-        suspect.setTexture(`suspect_${facing}_0`);
-        this.overlays.openDialogue(SUSPECT_A_START);
+        // Turn to face the player while talking.
+        const facing = facingFor({ x: this.player.x - npc.x, y: this.player.y - npc.y }, npc.facing);
+        sprite.setTexture(`${npc.id}_${facing}_0`);
+        this.overlays.openDialogue(npc.startNode);
       },
     });
   }
 
-  private addClue(clue: Clue, x: number, y: number): void {
-    const image = this.prop('paper', x, y);
+  private addFloorClue(placed: FloorClue): void {
+    const clue = CLUES[placed.clueId];
+    const { x, y } = placed;
+    const image = this.prop(placed.sprite, x, y);
     image.setDepth(y + 1);
     const glint = this.lights.addLight(x, y - 6, 26, 0xfff0c0, 2.5, 8);
     const interactable: Interactable = {
@@ -247,7 +262,7 @@ export class Day1Scene extends Phaser.Scene {
       promptY: y - 10,
       use: () => {
         this.state.pickUp(clue);
-        this.overlays.toast(`Picked up: ${clue.name}`);
+        this.overlays.toast(`New clue: ${clue.name}`);
         image.destroy();
         this.lights.removeLight(glint);
         this.interactables = this.interactables.filter((i) => i !== interactable);

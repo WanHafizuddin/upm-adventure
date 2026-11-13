@@ -28,6 +28,13 @@ describe('DeductionValidator', () => {
     expect(validator.tryConnect('suspect_a', 'torn_note')).toEqual({ valid: false, unlockFlags: [] });
   });
 
+  it('passes on the insight a link teaches', () => {
+    const validator = new DeductionValidator([
+      { clueId: 'coffee_tumbler', targetId: 'rosli', unlockFlags: ['linked_tumbler_to_victim'], insight: 'Poisoned coffee.' },
+    ]);
+    expect(validator.tryConnect('rosli', 'coffee_tumbler').insight).toBe('Poisoned coffee.');
+  });
+
   it('remembers which links have been made', () => {
     const validator = new DeductionValidator(links);
     expect(validator.isConnected('suspect_a', 'torn_note')).toBe(false);

@@ -43,6 +43,7 @@ Student amateur sleuth — a regular student pulled into the investigation (e.g.
 
 - **Victim:** A lecturer, found dead on campus.
 - **Suspects:** 3 total. Each has a distinct motive, an alibi, and 2–3 clues tied specifically to them (roughly 6–9 core clues total, plus a small number of shared/red-herring clues).
+- **The full case** (names, culprit, timeline, every clue by day, board links, endings) is in [2026-11-13-campus-mystery-case-design.md](2026-11-13-campus-mystery-case-design.md). Its story choices are Claude's calls.
 
 ## Structure: Day-by-Day Chapters
 

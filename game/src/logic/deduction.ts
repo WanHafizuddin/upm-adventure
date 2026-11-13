@@ -3,11 +3,14 @@ export interface DeductionLink {
   clueId: string;
   targetId: string;
   unlockFlags: string[];
+  /** What the player learns from making this link, shown when they make it. */
+  insight?: string;
 }
 
 export interface ConnectionResult {
   valid: boolean;
   unlockFlags: readonly string[];
+  insight?: string;
 }
 
 const REJECTED: ConnectionResult = { valid: false, unlockFlags: [] };
@@ -27,7 +30,9 @@ export class DeductionValidator {
     if (this.made.has(key)) return REJECTED;
 
     this.made.add(key);
-    return { valid: true, unlockFlags: [...link.unlockFlags] };
+    return link.insight === undefined
+      ? { valid: true, unlockFlags: [...link.unlockFlags] }
+      : { valid: true, unlockFlags: [...link.unlockFlags], insight: link.insight };
   }
 
   isConnected(a: string, b: string): boolean {

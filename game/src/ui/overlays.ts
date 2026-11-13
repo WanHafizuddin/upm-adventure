@@ -1,6 +1,7 @@
+import type { Clue } from '../logic/clues';
 import type { DialogueNode } from '../logic/dialogue';
 import type { GameState } from '../logic/gameState';
-import type { Suspect } from '../data/day1';
+import type { Person } from '../data/day1';
 import { DeductionBoard } from './deductionBoard';
 import { DialogueBox } from './dialogueBox';
 import { Toaster } from './toast';
@@ -15,7 +16,11 @@ export class Overlays {
   constructor(
     root: HTMLElement,
     private readonly state: GameState,
-    content: { dialogue: Readonly<Record<string, DialogueNode>>; suspects: readonly Suspect[] },
+    content: {
+      dialogue: Readonly<Record<string, DialogueNode>>;
+      clues: Readonly<Record<string, Clue>>;
+      people: readonly Person[];
+    },
   ) {
     const hud = document.createElement('div');
     hud.className = 'hud';
@@ -25,8 +30,8 @@ export class Overlays {
     root.appendChild(hud);
 
     this.toaster = new Toaster(root);
-    this.dialogue = new DialogueBox(root, state, content.dialogue);
-    this.board = new DeductionBoard(root, state, content.suspects, (text) => this.toast(text));
+    this.dialogue = new DialogueBox(root, state, content.dialogue, content.clues, (text) => this.toast(text));
+    this.board = new DeductionBoard(root, state, content.people, (text) => this.toast(text));
 
     state.onChange(() => this.checkDayComplete());
   }
@@ -68,7 +73,7 @@ export class Overlays {
   private checkDayComplete(): void {
     if (this.dayCompleteAnnounced || !this.state.isDay1Complete()) return;
     this.dayCompleteAnnounced = true;
-    // Let the "Connected" message show first.
+    // Let the link's own message show first.
     window.setTimeout(() => this.toaster.show('Day 1 complete. The case continues tomorrow.', 4500), 700);
   }
 }

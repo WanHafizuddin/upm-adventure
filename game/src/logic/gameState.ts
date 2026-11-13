@@ -1,6 +1,7 @@
 import { ClueInventory, type Clue } from './clues';
 import { isDayComplete } from './day';
 import { DeductionValidator, type ConnectionResult, type DeductionLink } from './deduction';
+import type { DialogueNode } from './dialogue';
 import { Flags } from './flags';
 
 /**
@@ -32,6 +33,17 @@ export class GameState {
     const changed = this.flags.set(id);
     if (changed) this.notify();
     return changed;
+  }
+
+  /**
+   * Applies what reaching a dialogue node does: turns on its flag and hands over its clue.
+   * Returns the clue only the first time it's gained, so the UI can announce it once.
+   */
+  enterNode(node: DialogueNode, clues: Readonly<Record<string, Clue>>): Clue | undefined {
+    if (node.setsFlag) this.setFlag(node.setsFlag);
+    if (!node.givesClue) return undefined;
+    const clue = clues[node.givesClue];
+    return clue && this.pickUp(clue) ? clue : undefined;
   }
 
   connect(a: string, b: string): ConnectionResult {
