@@ -12,4 +12,9 @@ export class Flags {
   get(id: string): boolean {
     return this.set_.has(id);
   }
+
+  /** Every flag that is on, e.g. for saving. */
+  all(): string[] {
+    return [...this.set_];
+  }
 }

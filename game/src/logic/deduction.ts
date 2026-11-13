@@ -39,6 +39,16 @@ export class DeductionValidator {
     return this.made.has(pairKey(a, b));
   }
 
+  /** Links made so far, as opaque keys, e.g. for saving. */
+  connections(): string[] {
+    return [...this.made];
+  }
+
+  /** Marks links (from `connections()`) as already made. */
+  restoreConnections(keys: readonly string[]): void {
+    keys.forEach((key) => this.made.add(key));
+  }
+
   private find(a: string, b: string): DeductionLink | undefined {
     return this.links.find(
       (l) => (l.clueId === a && l.targetId === b) || (l.clueId === b && l.targetId === a),

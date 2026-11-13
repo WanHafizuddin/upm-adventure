@@ -18,10 +18,12 @@ A fan-made game: every character and event is fictional, and it is not an offici
 - Day 3 opens Makmal 2 and the upstairs offices: a suspicious logbook, the victim's audit notes and a call record that settle who's lying
 - Day 4 brings the police toxicology report and a confrontation in the lab
 - Day 5 is the accusation: name the killer and pick three pieces of evidence. There are three endings, and a weak or wrong accusation can be tried again
+- Progress saves automatically in your browser; Continue picks up where you left off
+- Night ambience, a quiet noir soundtrack and sound effects, all generated in code (M to mute)
 - A "Today" checklist always shows what's left to do
 - UPM all around: the big red UPM sign, banners, Malay signage, motorcycles and the campus bus stop
 
-Ideas for later: more locations around campus, walk-cycle animation, sound and music, and the official UPM logo on the title card. The full case is planned in [the case design](docs/superpowers/specs/2026-11-13-campus-mystery-case-design.md). It contains spoilers.
+Ideas for later: more locations around campus, walk-cycle animation, and the official UPM logo on the title card. The full case is planned in [the case design](docs/superpowers/specs/2026-11-13-campus-mystery-case-design.md). It contains spoilers.
 
 ## Play it locally
 
@@ -35,7 +37,17 @@ npm run dev
 
 Then open http://localhost:5173.
 
-**Controls:** WASD or arrow keys to move · E to interact · Tab for the deduction board · 1–4 to pick a reply · Esc to close
+**Controls:** WASD or arrow keys to move · E to interact · Tab for the deduction board · 1–4 to pick a reply · Esc to close · M to mute
+
+## Put it online (Vercel)
+
+The game is a static site, so it runs on Vercel's free plan. `vercel.json` in this repo tells Vercel how to build it:
+
+1. Sign in at [vercel.com](https://vercel.com) with GitHub.
+2. **Add New → Project**, pick this repository, and click **Deploy** (no settings to change).
+3. Share the link Vercel gives you, e.g. `https://upm-adventure.vercel.app`.
+
+Every push to `master` redeploys automatically.
 
 ## How it's built
 

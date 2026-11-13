@@ -1,3 +1,4 @@
+import { sound } from '../audio/sound';
 import type { Person } from '../data/case';
 import { LAST_DAY, daySpec, type DaySpec } from '../data/days';
 import type { Clue } from '../logic/clues';
@@ -18,6 +19,8 @@ export class Overlays {
   private readonly where: HTMLElement;
   private readonly todo: HTMLElement;
   private readonly card: HTMLElement;
+  private readonly title: HTMLElement;
+  private restart: () => void = () => window.location.reload();
   private place = '';
   private readonly announcedDays = new Set<number>();
 
@@ -34,7 +37,7 @@ export class Overlays {
     hud.className = 'hud';
     hud.innerHTML = `
       <span class="where"></span>
-      <span class="keys">WASD move · E interact · Tab board</span>`;
+      <span class="keys">WASD move · E interact · Tab board · M sound</span>`;
     this.where = hud.querySelector('.where')!;
     root.appendChild(hud);
 
@@ -48,8 +51,12 @@ export class Overlays {
       if (action === 'accuse') this.accusation.open();
     });
     this.board = new DeductionBoard(root, state, content.people, (text) => this.toast(text));
-    this.accusation = new AccusationPanel(root, state, content.people, (text) => this.toast(text));
+    this.accusation = new AccusationPanel(root, state, content.people, (text) => this.toast(text), () => this.restart());
     this.card = this.buildDayCard(root);
+    this.title = document.createElement('section');
+    this.title.className = 'daycard titlecard';
+    this.title.hidden = true;
+    root.appendChild(this.title);
 
     state.onChange(() => {
       this.updateHud();
@@ -59,7 +66,7 @@ export class Overlays {
 
   /** True while an overlay should stop the player from walking or interacting. */
   isBlocking(): boolean {
-    return this.dialogue.isOpen || this.board.isOpen || this.accusation.isOpen || !this.card.hidden;
+    return this.dialogue.isOpen || this.board.isOpen || this.accusation.isOpen || !this.card.hidden || !this.title.hidden;
   }
 
   isDialogueOpen(): boolean {
@@ -73,6 +80,7 @@ export class Overlays {
   }
 
   openDialogue(startId: string): void {
+    sound.talk();
     this.board.close();
     this.dialogue.open(startId);
   }
@@ -98,12 +106,60 @@ export class Overlays {
     this.toaster.show(text);
   }
 
+  /** What "Play again from Day 1" does (main.ts clears the save, then reloads). */
+  setRestartHandler(handler: () => void): void {
+    this.restart = handler;
+  }
+
+  /** After loading a save, don't repeat "Day N complete" for days already behind the player. */
+  markDaysAnnounced(upToDay: number): void {
+    for (let d = 1; d <= upToDay; d++) this.announcedDays.add(d);
+  }
+
+  /** Start-up menu when a save exists. New game asks for a second click before erasing the save. */
+  showTitle(continueLabel: string, onContinue: () => void, onNewGame: () => void): void {
+    this.title.innerHTML = `
+      <div class="daycard-inner">
+        <img class="upm-logo" src="upm-logo.png" alt="Universiti Putra Malaysia" />
+        <p class="upm-name">Universiti Putra Malaysia</p>
+        <p class="upm-motto">Berilmu Berbakti</p>
+        <h1 class="game-title">Case Files: Serdang Raya</h1>
+        <div class="title-buttons">
+          <button type="button" class="title-continue"></button>
+          <button type="button" class="title-new">New game</button>
+        </div>
+        <p class="disclaimer">A fan-made story. All characters and events are fictional. Not an official UPM production.</p>
+      </div>`;
+    const logo = this.title.querySelector<HTMLImageElement>('.upm-logo')!;
+    logo.addEventListener('error', () => (logo.hidden = true));
+    const cont = this.title.querySelector<HTMLButtonElement>('.title-continue')!;
+    const fresh = this.title.querySelector<HTMLButtonElement>('.title-new')!;
+    cont.textContent = continueLabel;
+    cont.addEventListener('click', () => {
+      this.title.hidden = true;
+      onContinue();
+    });
+    let armed = false;
+    fresh.addEventListener('click', () => {
+      if (!armed) {
+        armed = true;
+        fresh.textContent = 'Erase your save and start over? Click again';
+        return;
+      }
+      this.title.hidden = true;
+      onNewGame();
+    });
+    this.title.hidden = false;
+    cont.focus();
+  }
+
   /** The full-screen card that opens each day. Closes on click, or on releasing E, Enter or Space. */
   showDayCard(day: DaySpec): void {
     this.card.querySelector('.day-number')!.textContent = `Day ${day.day}`;
     this.card.querySelector('.day-subtitle')!.textContent = day.subtitle;
     this.card.querySelector('.day-hint')!.textContent = day.hint;
     this.card.hidden = false;
+    sound.dayStart();
   }
 
   private buildDayCard(root: HTMLElement): HTMLElement {

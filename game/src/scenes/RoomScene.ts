@@ -1,12 +1,13 @@
 import { DOOR_W, FURNITURE, WALL_H, roomTexture } from '../art/interiors';
 import type { GameState } from '../logic/gameState';
+import type { Progress } from '../save';
 import type { Overlays } from '../ui/overlays';
 import { WorldScene } from './WorldScene';
 
 /** Any indoor location: draws the room and its furniture from the location's data. */
 export class RoomScene extends WorldScene {
-  constructor(state: GameState, overlays: Overlays) {
-    super('room', state, overlays);
+  constructor(state: GameState, overlays: Overlays, progress: Progress) {
+    super('room', state, overlays, progress);
   }
 
   protected buildWorld(): { w: number; h: number } {

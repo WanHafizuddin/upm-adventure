@@ -2,6 +2,7 @@ import * as Phaser from 'phaser';
 import { LIT_WINDOWS, WINDOW_BAY_X } from '../art/sprites';
 import { daySpec } from '../data/days';
 import type { GameState } from '../logic/gameState';
+import type { Progress } from '../save';
 import type { Overlays } from '../ui/overlays';
 import { BUILDING_H, DOOR_X, MAP_H, MAP_W, PLAZA } from './courtyardLayout';
 import { WorldScene } from './WorldScene';
@@ -12,8 +13,8 @@ const AMBIENT = { Night: 0x7a76b8, Evening: 0x8a7db0 } as const;
 
 /** The courtyard of Fakulti Sains, UPM, seen from above. */
 export class CourtyardScene extends WorldScene {
-  constructor(state: GameState, overlays: Overlays) {
-    super('courtyard', state, overlays);
+  constructor(state: GameState, overlays: Overlays, progress: Progress) {
+    super('courtyard', state, overlays, progress);
   }
 
   protected buildWorld(): { w: number; h: number } {

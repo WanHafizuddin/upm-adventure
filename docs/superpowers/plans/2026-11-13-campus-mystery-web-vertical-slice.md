@@ -10,7 +10,7 @@
 
 **Spec:** [2026-09-27-campus-mystery-game-design.md](../specs/2026-09-27-campus-mystery-game-design.md) (revised 2026-11-13: side-view 2D, web stack).
 
-**Status (2026-11-13):** Tasks 1–12 implemented and play-tested — the whole case, Days 1–5 and all three endings (Task 8 switched to top-down, 9 built the full Day 1, 10 added Day 2 and the UPM setting, 11 Day 3, 12 the finale); 57 unit tests pass; `npm run build` succeeds. Nothing committed yet. Where the build differs from the steps below, the notes in each task say so.
+**Status (2026-11-13):** Tasks 1–13 implemented and play-tested — the whole case, Days 1–5 and all three endings, plus save/continue and sound (Task 8 switched to top-down, 9 built the full Day 1, 10 added Day 2 and the UPM setting, 11 Day 3, 12 the finale, 13 saving; sound added alongside); 64 unit tests pass; `npm run build` succeeds. Nothing committed yet. Where the build differs from the steps below, the notes in each task say so.
 
 **Supersedes:** [2026-09-27-campus-mystery-vertical-slice.md](2026-09-27-campus-mystery-vertical-slice.md) (the Unity plan).
 
@@ -268,6 +268,25 @@ Implements Day 3 from the case design: Daniel's alibi breaks and Priya is cleare
 - [ ] **Step 1: Tests first.** `accusation.test.ts`: not ready with 2 clues; wrong suspect even with perfect evidence; true ending with logbook + toxicology + audit notes; unproven without motive (missing = ['motive']); duplicate clues don't count twice. `content.test.ts`: the rules only name real clues and a real suspect, and a winning evidence set can be collected by Day 5.
 - [ ] **Step 2:** Run, see them fail. **Step 3:** Implement. **Step 4:** Run, see them pass.
 - [ ] **Step 5:** Play-test Day 4, then Day 5: each ending is reachable, and retrying works.
+
+### Task 13: Save and continue
+
+A five-day game must survive a page refresh. Progress auto-saves to the browser's `localStorage`; a title menu offers Continue or New game.
+
+**Produces:**
+- `Flags.all(): string[]`; `DeductionValidator.connections(): string[]` and `restoreConnections(keys: readonly string[]): void`.
+- `GameState.snapshot(): Snapshot` (`{ day, clues, flags, links }`) and `GameState.restore(s: Snapshot, clues: Record<string, Clue>): void` (unknown clue ids are skipped, so old saves survive content changes).
+- `src/save.ts`: `SaveData = Snapshot & { version: 1; spawn: Spawn; place: string }`; `parseSave(json: string | null): SaveData | null` (null for missing, broken or other-version data); `createSaveStore(storage)` with `load()`, `save(data)`, `clear()` — storage injected so it can be tested without a browser.
+- Auto-save whenever the game state changes and whenever the player arrives somewhere (the arrival spot is where Continue puts them back).
+- Title menu at start-up when a save exists: "Continue — Day N · place" and "New game" (a second click confirms erasing the save). "Play again from Day 1" on an ending clears the save.
+
+- [ ] **Step 1: Tests first.** Flags list; validator connections round-trip; GameState snapshot/restore round-trip (day, clues, flags, links) and skipping unknown clues; `parseSave` rejects garbage, wrong versions and missing fields; the store saves, loads and clears through a fake storage.
+- [ ] **Step 2:** Run, see them fail. **Step 3:** Implement. **Step 4:** Run, see them pass.
+- [ ] **Step 5:** Play-test: progress, reload the page, Continue lands in the same room with the same clues, flags and board lines; New game asks first, then starts clean.
+
+### Sound (added with Task 13)
+
+`src/audio/sound.ts` synthesises everything with the Web Audio API, so there are no audio files or licences: wind and crickets outdoors, a fluorescent hum indoors, a slow A-minor pad with sparse pentatonic notes, and effects for footsteps (grass vs tile), clue pickups, dialogue, board links (valid and rejected), doors, the start of each day and each ending. Audio starts on the first click or key press (browsers require it); M mutes, and the choice is remembered. Checked in the browser: the audio context runs after a real click, every effect plays without errors, output is non-silent, and mute zeroes the master volume.
 
 ## Later (not this plan)
 

@@ -1,5 +1,6 @@
 import * as Phaser from 'phaser';
 import { signTexture } from '../art/signage';
+import { sound } from '../audio/sound';
 import { CLUES } from '../data/case';
 import { LAST_DAY, daySpec, type Spawn } from '../data/days';
 import { LOCATIONS, type ExamineSpot, type ExitSpec, type FloorClue, type LocationSpec, type NpcPlacement } from '../data/locations';
@@ -7,6 +8,7 @@ import { availableOn } from '../logic/days';
 import type { GameState } from '../logic/gameState';
 import { pickNearest } from '../logic/interaction';
 import { facingFor, moveVector, type Facing } from '../logic/movement';
+import type { Progress } from '../save';
 import type { Overlays } from '../ui/overlays';
 
 const SPEED = 85; // pixels per second
@@ -46,6 +48,7 @@ export abstract class WorldScene extends Phaser.Scene {
   private torch!: Phaser.GameObjects.Light;
   private facing: Facing = 'up';
   private walkTime = 0;
+  private lastPose = 0;
   private leaving = false;
   private blockers: Phaser.GameObjects.Zone[] = [];
   private interactables: Interactable[] = [];
@@ -56,6 +59,7 @@ export abstract class WorldScene extends Phaser.Scene {
     key: string,
     protected readonly state: GameState,
     protected readonly overlays: Overlays,
+    private readonly progress: Progress,
   ) {
     super(key);
   }
@@ -124,7 +128,9 @@ export abstract class WorldScene extends Phaser.Scene {
       four: kb.addKey(K.FOUR),
     };
 
+    sound.setAmbience(loc.scene === 'courtyard' ? 'outdoor' : 'indoor');
     this.overlays.setPlace(loc.name);
+    this.progress.arrived(this.spawn, loc.name);
   }
 
   update(_time: number, deltaMs: number): void {
@@ -194,6 +200,7 @@ export abstract class WorldScene extends Phaser.Scene {
   private goTo(spawn: Spawn): void {
     if (this.leaving) return;
     this.leaving = true;
+    sound.door();
     this.cameras.main.fadeOut(FADE_MS);
     this.cameras.main.once('camerafadeoutcomplete', () => {
       this.scene.start(LOCATIONS[spawn.location].scene, { spawn } satisfies WorldSceneData);
@@ -252,6 +259,7 @@ export abstract class WorldScene extends Phaser.Scene {
       promptY: y - 10,
       use: () => {
         this.state.pickUp(clue);
+        sound.pickup();
         this.overlays.toast(`New clue: ${clue.name}`);
         image.destroy();
         this.lights.removeLight(glint);
@@ -304,6 +312,8 @@ export abstract class WorldScene extends Phaser.Scene {
     this.facing = facingFor(v, this.facing);
     this.walkTime = moving ? this.walkTime + seconds : 0;
     const pose = moving ? 1 + (Math.floor(this.walkTime / STEP_SECONDS) % 2) : 0;
+    if (pose !== 0 && pose !== this.lastPose) sound.step(this.location.scene === 'courtyard' ? 'outdoor' : 'indoor');
+    this.lastPose = pose;
     this.player.setTexture(`player_${this.facing}_${pose}`);
     this.player.setDepth(this.player.y);
     this.playerShadow.setPosition(this.player.x, this.player.y);

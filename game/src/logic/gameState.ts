@@ -4,6 +4,14 @@ import { DeductionValidator, type ConnectionResult, type DeductionLink } from '.
 import type { DialogueNode } from './dialogue';
 import { Flags } from './flags';
 
+/** Everything needed to rebuild a game in progress. */
+export interface Snapshot {
+  day: number;
+  clues: string[];
+  flags: string[];
+  links: string[];
+}
+
 /**
  * Everything the player has found or done so far. The scene and the UI overlays
  * share one instance, and change it only through these methods so listeners hear about it.
@@ -70,6 +78,26 @@ export class GameState {
   /** Whether every goal of the current day is done. */
   isDayComplete(): boolean {
     return isDayComplete(this.dayGoals[this.currentDay] ?? [], this.flags);
+  }
+
+  snapshot(): Snapshot {
+    return {
+      day: this.currentDay,
+      clues: this.inventory.all().map((c) => c.id),
+      flags: this.flags.all(),
+      links: this.validator.connections(),
+    };
+  }
+
+  /** Loads a snapshot into this (fresh) state. Clues the game no longer has are skipped. */
+  restore(snapshot: Snapshot, clues: Readonly<Record<string, Clue>>): void {
+    this.currentDay = snapshot.day;
+    snapshot.clues.forEach((id) => {
+      if (clues[id]) this.inventory.add(clues[id]);
+    });
+    snapshot.flags.forEach((id) => this.flags.set(id));
+    this.validator.restoreConnections(snapshot.links);
+    this.notify();
   }
 
   onChange(listener: () => void): void {

@@ -81,4 +81,28 @@ describe('GameState', () => {
 
     expect(listener).not.toHaveBeenCalled();
   });
+
+  it('snapshots and restores the day, clues, flags and board links', () => {
+    const note = { id: 'torn_note', name: 'Torn Note', description: '' };
+    const state = makeState();
+    state.pickUp(note);
+    state.setFlag('met_suspect_a');
+    state.connect('torn_note', 'suspect_a');
+    state.advanceDay();
+
+    const copy = makeState();
+    copy.restore(state.snapshot(), { torn_note: note });
+
+    expect(copy.day).toBe(2);
+    expect(copy.inventory.has('torn_note')).toBe(true);
+    expect(copy.flags.get('met_suspect_a')).toBe(true);
+    expect(copy.flags.get('linked_note_to_suspect_a')).toBe(true);
+    expect(copy.validator.isConnected('torn_note', 'suspect_a')).toBe(true);
+  });
+
+  it('skips clues in a save that no longer exist', () => {
+    const copy = makeState();
+    copy.restore({ day: 1, clues: ['gone_clue'], flags: [], links: [] }, {});
+    expect(copy.inventory.all()).toHaveLength(0);
+  });
 });

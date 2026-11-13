@@ -1,3 +1,4 @@
+import { sound } from '../audio/sound';
 import { ACCUSATION, CLUES, ENDINGS, type Person } from '../data/case';
 import { judgeAccusation, type Verdict } from '../logic/accusation';
 import type { GameState } from '../logic/gameState';
@@ -24,6 +25,7 @@ export class AccusationPanel {
     private readonly state: GameState,
     private readonly people: readonly Person[],
     private readonly toast: (text: string) => void,
+    private readonly restartGame: () => void,
   ) {
     this.el = document.createElement('section');
     this.el.className = 'panel accuse';
@@ -123,6 +125,7 @@ export class AccusationPanel {
 
   private showEnding(verdict: Verdict, suspectId: string): void {
     if (verdict.ending === 'not_ready') return;
+    sound.ending(verdict.ending);
     const ending = ENDINGS[verdict.ending];
     const name = this.people.find((p) => p.id === suspectId)?.name ?? suspectId;
 
@@ -158,7 +161,7 @@ export class AccusationPanel {
     const restart = document.createElement('button');
     restart.type = 'button';
     restart.textContent = 'Play again from Day 1';
-    restart.addEventListener('click', () => window.location.reload());
+    restart.addEventListener('click', () => this.restartGame());
     buttons.appendChild(restart);
 
     this.endCard.hidden = false;

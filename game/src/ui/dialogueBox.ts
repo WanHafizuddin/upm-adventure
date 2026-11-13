@@ -1,4 +1,5 @@
 import { isChoiceAvailable, resolveChoice, type DialogueChoice, type DialogueNode } from '../logic/dialogue';
+import { sound } from '../audio/sound';
 import type { Clue } from '../logic/clues';
 import type { GameState } from '../logic/gameState';
 
@@ -56,7 +57,10 @@ export class DialogueBox {
   private show(node: DialogueNode): void {
     this.current = node;
     const gained = this.state.enterNode(node, this.clues);
-    if (gained) this.toast(`New clue: ${gained.name}`);
+    if (gained) {
+      sound.pickup();
+      this.toast(`New clue: ${gained.name}`);
+    }
 
     this.speakerEl.textContent = node.speaker;
     this.textEl.textContent = node.text;
@@ -78,6 +82,7 @@ export class DialogueBox {
 
   private choose(index: number): void {
     if (!this.current) return;
+    sound.select();
     const action = this.current.choices[index]?.action;
     if (action) {
       this.close();

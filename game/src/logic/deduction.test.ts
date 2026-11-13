@@ -41,4 +41,13 @@ describe('DeductionValidator', () => {
     validator.tryConnect('torn_note', 'suspect_a');
     expect(validator.isConnected('suspect_a', 'torn_note')).toBe(true);
   });
+
+  it('can list its made links and restore them into a fresh validator', () => {
+    const first = new DeductionValidator(links);
+    first.tryConnect('torn_note', 'suspect_a');
+    const second = new DeductionValidator(links);
+    second.restoreConnections(first.connections());
+    expect(second.isConnected('suspect_a', 'torn_note')).toBe(true);
+    expect(second.tryConnect('torn_note', 'suspect_a').valid).toBe(false);
+  });
 });

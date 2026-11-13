@@ -605,3 +605,39 @@ body {
 .end-buttons button:hover {
   border-color: var(--amber);
 }
+
+/* --- Title menu (when there's a save) --- */
+
+.titlecard {
+  cursor: default;
+}
+
+.title-buttons {
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+  margin-top: 28px;
+}
+
+.title-buttons button {
+  min-width: 320px;
+  padding: 12px 22px;
+  font: 16px var(--sans);
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--edge);
+  cursor: pointer;
+}
+
+.title-buttons .title-continue {
+  font-weight: 600;
+  color: #fff;
+  background: var(--upm-red);
+  border-color: var(--upm-red);
+}
+
+.title-buttons button:hover,
+.title-buttons button:focus-visible {
+  border-color: var(--amber);
+  outline: none;
+}

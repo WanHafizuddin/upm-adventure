@@ -1,4 +1,5 @@
 import type { Person } from '../data/case';
+import { sound } from '../audio/sound';
 import type { GameState } from '../logic/gameState';
 
 interface BoardCard {
@@ -160,9 +161,11 @@ export class DeductionBoard {
     }
     const result = this.state.connect(idA, idB);
     if (result.valid) {
+      sound.connect();
       this.toast(`✓ ${result.insight ?? `Connected: ${a.dataset.name} ↔ ${b.dataset.name}`}`);
       this.redrawLines();
     } else {
+      sound.reject();
       this.toast('No connection you can prove yet.');
     }
   }

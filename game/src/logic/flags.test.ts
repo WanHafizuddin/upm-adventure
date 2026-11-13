@@ -17,4 +17,11 @@ describe('Flags', () => {
     expect(flags.set('met_suspect_a')).toBe(true);
     expect(flags.set('met_suspect_a')).toBe(false);
   });
+
+  it('lists every flag that is set', () => {
+    const flags = new Flags();
+    flags.set('met_farah');
+    flags.set('examined_scene');
+    expect(flags.all().sort()).toEqual(['examined_scene', 'met_farah']);
+  });
 });
