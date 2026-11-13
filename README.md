@@ -41,11 +41,12 @@ Then open http://localhost:5173.
 
 ## Put it online (Vercel)
 
-The game is a static site, so it runs on Vercel's free plan. `vercel.json` in this repo tells Vercel how to build it:
+The game is a static site, so it runs on Vercel's free plan. `game/vercel.json` tells Vercel how to build it:
 
 1. Sign in at [vercel.com](https://vercel.com) with GitHub.
-2. **Add New → Project**, pick this repository, and click **Deploy** (no settings to change).
-3. Share the link Vercel gives you, e.g. `https://upm-adventure.vercel.app`.
+2. **Add New → Project** and pick this repository.
+3. Make sure **Root Directory** is `game` (Vercel usually fills this in for you), then click **Deploy**.
+4. Share the link Vercel gives you, e.g. `https://upm-adventure.vercel.app`.
 
 Every push to `master` redeploys automatically.
 
