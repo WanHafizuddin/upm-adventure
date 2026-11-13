@@ -4,19 +4,19 @@ The story behind the game: who died, who did it, how, and how the player can pro
 
 **Every story decision here is Claude's call** (the developer asked Claude to choose). All of it lives in data files under `game/src/data/`, so any name, line or clue can be changed without touching game code.
 
-All names are fictional. The campus is fictional. Tone is noir-lite: the death is a poisoning, nothing graphic is shown.
+The case is set at UPM Serdang (see the game design's Setting). Every person and event in it is fictional. Tone is noir-lite: the death is a poisoning, nothing graphic is shown.
 
 ---
 
 ## The victim
 
-**Dr. Rosli Kamarudin**, senior lecturer in Chemistry, Faculty of Science. Exacting, suspicious and often right. Known for auditing everything and everyone. Carries the same steel coffee tumbler everywhere.
+**Dr. Rosli Kamarudin**, senior lecturer in Chemistry, Fakulti Sains, UPM. Exacting, suspicious and often right. Known for auditing everything and everyone. Carries the same steel coffee tumbler everywhere.
 
 Found collapsed beside the courtyard fountain at about 10:40 pm by campus security. He was poisoned through his coffee.
 
 ## The player
 
-A student who was studying late in the faculty and heard the commotion. They have no authority, only curiosity, and the suspects talk to them more openly than to the police.
+A student living at KTDI who was studying late in the faculty and heard the commotion. They have no authority, only curiosity, and the suspects talk to them more openly than to the police.
 
 ## The suspects
 
@@ -49,9 +49,9 @@ Clues marked ★ are needed to prove the case. The others are red herrings or co
 | 1 | Farah's Alibi | Farah's statement | Library, level 3, borrowed books before closing |
 | 1 | Daniel's Alibi | Daniel's statement | Lab 2, logbook signed every half hour |
 | 1 | The Argument | Priya's statement | Priya argued with Rosli at 9:30 |
-| 2 | Library Gate Log | Library | Farah's student card exits at 10:55 (clears Farah) |
-| 2 | Door Access Log ★ | Security office | Daniel's spare card out 9:41, in 10:24; his "lost" main card was used at 6:15 that evening |
-| 2 | Cleaner's Statement ★ | Pantry | Daniel was at the pantry around 9:45, near a steel tumbler |
+| 2 | Library Gate Log | PSAS (Perpustakaan Sultan Abdul Samad) | Farah's student card exits at 10:55 (clears Farah) |
+| 2 | Door Access Log ★ | Pejabat Keselamatan (security office) | Daniel's spare card out 9:41, in 10:24; his "lost" main card was used at 6:15 that evening |
+| 2 | Cleaner's Statement ★ | Fakulti Sains pantri | Daniel was at the pantry around 9:45, near a steel tumbler |
 | 3 | Pre-signed Logbook ★ | Lab 2 | The 10:00 and 10:30 signatures are identical, written in one go |
 | 3 | Rosli's Audit Notes ★ | Rosli's office | Reagent missing from stores; meeting with the Dean booked for the morning |
 | 3 | Video Call Record | Priya's office | Call ran 9:58–11:02 (clears Priya) |
@@ -73,7 +73,7 @@ Later days add links such as Library Gate Log ↔ Farah's Alibi (Farah cleared),
 ## Day goals
 
 - **Day 1 (built):** meet all three suspects (`met_farah`, `met_daniel`, `met_priya`), examine the crime scene (`examined_scene`), and work out how he died (`linked_tumbler_to_victim`).
-- **Day 2:** check the library, the security office and the pantry. Clear Farah.
+- **Day 2 (built):** PSAS (Puan Lim, librarian on night duty), the security office (Encik Rahman, the guard who found him) and the Fakulti Sains ground floor (Kak Ani, the cleaner). Goals: meet all three (`met_librarian`, `met_guard`, `met_cleaner`) and clear Farah (`farah_cleared`). Day 2 links: Library Gate Log ↔ Farah's Alibi, Door Access Log ↔ Lab Access Card, Door Access Log ↔ Daniel's Alibi, Cleaner's Statement ↔ Coffee Tumbler.
 - **Day 3:** Lab 2, Rosli's office, Priya's office. Clear Priya, break Daniel's alibi.
 - **Day 4:** toxicology arrives. Confront each suspect with evidence.
 - **Day 5:** accusation.

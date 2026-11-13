@@ -137,6 +137,7 @@ body {
   inset: 48px 32px 32px;
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
   padding: 18px 24px;
   background:
     radial-gradient(ellipse at center, rgba(70, 52, 34, 0.35), transparent 70%),
@@ -160,7 +161,7 @@ body {
 
 .board-area {
   position: relative;
-  flex: 1;
+  flex: 1 0 auto;
   margin-top: 12px;
   user-select: none;
 }
@@ -296,5 +297,106 @@ body {
   from {
     opacity: 0;
     transform: translateY(-6px);
+  }
+}
+
+/* --- Day title card (UPM red, white and grey) --- */
+
+:root {
+  --upm-red: #b5121b;
+  --upm-grey: #8e8f94;
+}
+
+.daycard {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  pointer-events: auto;
+  cursor: pointer;
+  background:
+    radial-gradient(ellipse at center, rgba(181, 18, 27, 0.18), transparent 65%),
+    rgba(6, 5, 12, 0.94);
+  animation: card-in 0.5s ease-out;
+}
+
+.daycard-inner {
+  max-width: 640px;
+  padding: 24px;
+  text-align: center;
+}
+
+.upm-logo {
+  height: 96px;
+  margin-bottom: 8px;
+}
+
+.upm-name {
+  margin: 0;
+  font: 600 14px var(--sans);
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: #f4f4f4;
+}
+
+.upm-motto {
+  margin: 4px 0 26px;
+  font: italic 14px var(--serif);
+  letter-spacing: 0.1em;
+  color: var(--upm-grey);
+}
+
+.game-title {
+  margin: 0;
+  padding-bottom: 14px;
+  border-bottom: 2px solid var(--upm-red);
+  font: italic 22px var(--serif);
+  color: var(--muted);
+}
+
+.day-number {
+  margin: 22px 0 0;
+  font: 64px var(--serif);
+  color: #fff;
+}
+
+.day-subtitle {
+  margin: 4px 0 18px;
+  font: italic 22px var(--serif);
+  color: var(--amber);
+}
+
+.day-hint {
+  margin: 0 auto 26px;
+  max-width: 520px;
+  font: 17px/1.5 var(--sans);
+  color: var(--ink);
+}
+
+.day-continue {
+  margin: 0;
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--upm-red);
+  animation: pulse 1.8s ease-in-out infinite;
+}
+
+.disclaimer {
+  margin: 28px 0 0;
+  font-size: 11px;
+  color: #6c6f7a;
+}
+
+@keyframes card-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.45;
   }
 }

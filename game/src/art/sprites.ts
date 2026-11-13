@@ -1,6 +1,7 @@
 import type * as Phaser from 'phaser';
 import { BUILDING_H, DOOR_X, MAP_H, MAP_W, PLAZA, isPath, plazaDistance } from '../scenes/courtyardLayout';
 import type { Look } from './look';
+import { drawText, textWidth } from './pixelFont';
 import { C } from './palette';
 import { PixelCanvas, mix, rng, type Rgb } from './pixelCanvas';
 
@@ -19,7 +20,8 @@ export function createSprites(scene: Phaser.Scene, player: Look, npcs: Readonly<
   [11, 23, 37].forEach((seed, i) => tree(seed).toTexture(scene, `tree_${i}`));
   bush(5, false).toTexture(scene, 'bush_0');
   bush(9, true).toTexture(scene, 'bush_1');
-  lamp().toTexture(scene, 'lamp');
+  lamp(false).toTexture(scene, 'lamp');
+  lamp(true).toTexture(scene, 'lamp_upm');
   bench().toTexture(scene, 'bench');
   fountain().toTexture(scene, 'fountain');
   tape().toTexture(scene, 'tape');
@@ -185,7 +187,6 @@ function ringStone(x: number, y: number, d: number): Rgb {
 
 function building(): PixelCanvas {
   const b = new PixelCanvas(MAP_W, BUILDING_H);
-  const r = rng(3);
 
   // Roof tiles.
   for (let y = 0; y < 20; y++) {
@@ -255,9 +256,12 @@ function building(): PixelCanvas {
   }
   b.px(dx + 15, 78, C.lampGlass);
   b.px(dx + 20, 78, C.lampGlass);
-  b.rect(dx - 6, 30, 48, 10, C.wood1); // nameplate
-  b.rect(dx - 6, 30, 48, 1, C.wood2);
-  for (let i = 0; i < 18; i++) if (r() > 0.25) b.rect(dx - 2 + i * 2.2, 34, 1, 3, C.paper); // lettering, too small to read
+  const plate = 'FAKULTI SAINS';
+  const plateW = textWidth(plate) + 12;
+  b.rect(DOOR_X - plateW / 2, 27, plateW, 13, 0x2a2140); // nameplate
+  b.rect(DOOR_X - plateW / 2, 27, plateW, 1, 0x4a3f63);
+  b.rect(DOOR_X - plateW / 2, 39, plateW, 1, 0xb5121b);
+  drawText(b, plate, DOOR_X - Math.round(textWidth(plate) / 2), 30, 0xf4ead2);
 
   // Plinth and door step.
   b.rect(0, 104, MAP_W, 8, C.plinth);
@@ -359,8 +363,9 @@ function sparkleLeaves(c: PixelCanvas, r: () => number, count: number): void {
 
 // --- Props -----------------------------------------------------------------
 
-function lamp(): PixelCanvas {
-  const l = new PixelCanvas(12, 50);
+/** A lamp post; with `banner`, a red UPM banner hangs from it. */
+function lamp(banner: boolean): PixelCanvas {
+  const l = new PixelCanvas(banner ? 24 : 12, 50);
   l.rect(2, 46, 8, 3, C.metal0);
   l.rect(3, 42, 6, 4, C.metal1);
   l.rect(3, 42, 6, 1, C.metal2);
@@ -372,6 +377,14 @@ function lamp(): PixelCanvas {
   l.rect(2, 4, 8, 2, C.metal0);
   l.rect(3, 2, 6, 2, C.metal1);
   l.rect(5, 1, 2, 1, C.metal2);
+  if (banner) {
+    l.rect(7, 15, 2, 1, C.metal0); // bracket
+    l.rect(9, 15, 13, 26, 0xb5121b);
+    l.rect(9, 15, 13, 1, 0xd84a4f);
+    l.rect(9, 41, 5, 1, 0xb5121b); // swallow-tail bottom
+    l.rect(17, 41, 5, 1, 0xb5121b);
+    for (const [ch, y] of [['U', 17], ['P', 25], ['M', 33]] as const) drawText(l, ch, 13, y, 0xeeeeef);
+  }
   l.outline(C.outline);
   return l;
 }

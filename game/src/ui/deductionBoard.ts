@@ -1,4 +1,4 @@
-import type { Person } from '../data/day1';
+import type { Person } from '../data/case';
 import type { GameState } from '../logic/gameState';
 
 interface BoardCard {
@@ -10,6 +10,8 @@ interface BoardCard {
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const HINT = 'Hover a card to read it. Drag one card onto another to connect them.';
+/** Vertical space per card row, in CSS pixels (a card is about 52px tall). */
+const ROW_PX = 66;
 
 /**
  * Full-screen board. With a few clues: clues left, people right. With many: people in the middle and
@@ -80,25 +82,26 @@ export class DeductionBoard {
     const people: BoardCard[] = this.people.map((p) => ({ id: p.id, name: p.name, kind: p.kind, detail: p.role }));
     this.emptyHint.hidden = clues.length > 0;
 
-    // Spread cards evenly down the board, however many there are.
-    const step = (count: number) => Math.min(23, 88 / Math.max(count, 1));
+    // Each row has a fixed height so cards never overlap. On a short window the board scrolls instead.
     const split = clues.length > 4;
     const clueRows = Math.ceil(clues.length / (split ? 2 : 1));
+    const rows = Math.max(clueRows, people.length);
+    this.area.style.minHeight = `${rows * ROW_PX + 8}px`;
     clues.forEach((card, i) => {
       const column = split && i % 2 === 1 ? 'right' : 'left';
       const row = split ? Math.floor(i / 2) : i;
-      this.addCard(card, column, 3 + row * step(clueRows));
+      this.addCard(card, column, 6 + row * ROW_PX);
     });
-    people.forEach((card, i) => this.addCard(card, split ? 'center' : 'right', 3 + i * step(people.length)));
+    people.forEach((card, i) => this.addCard(card, split ? 'center' : 'right', 6 + i * ROW_PX));
     this.redrawLines();
   }
 
-  private addCard(card: BoardCard, column: string, topPercent: number): void {
+  private addCard(card: BoardCard, column: string, topPx: number): void {
     const el = document.createElement('div');
     el.className = `card ${card.kind.toLowerCase()} ${column}`;
     el.dataset.id = card.id;
     el.dataset.name = card.name;
-    el.style.top = `${topPercent}%`;
+    el.style.top = `${topPx}px`;
     const kind = document.createElement('span');
     kind.className = 'kind';
     kind.textContent = card.kind;

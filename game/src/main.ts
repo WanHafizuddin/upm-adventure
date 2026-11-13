@@ -1,11 +1,15 @@
 import * as Phaser from 'phaser';
 import './style.css';
-import { CLUES, DAY1_REQUIRED, DIALOGUE, LINKS, PEOPLE } from './data/day1';
+import { CLUES, LINKS, PEOPLE } from './data/case';
+import { DAY_GOALS } from './data/days';
+import { DIALOGUE } from './data/dialogue';
 import { GameState } from './logic/gameState';
-import { Day1Scene } from './scenes/Day1Scene';
+import { BootScene } from './scenes/BootScene';
+import { CourtyardScene } from './scenes/CourtyardScene';
+import { RoomScene } from './scenes/RoomScene';
 import { Overlays } from './ui/overlays';
 
-const state = new GameState(LINKS, DAY1_REQUIRED);
+const state = new GameState(LINKS, DAY_GOALS);
 const overlays = new Overlays(document.getElementById('ui')!, state, { dialogue: DIALOGUE, clues: CLUES, people: PEOPLE });
 
 const game = new Phaser.Game({
@@ -25,7 +29,7 @@ const game = new Phaser.Game({
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
   },
-  scene: [new Day1Scene(state, overlays)],
+  scene: [new BootScene(overlays), new CourtyardScene(state, overlays), new RoomScene(state, overlays)],
 });
 
 // Dev-only handles for poking at the game from the browser console. Not included in `npm run build`.

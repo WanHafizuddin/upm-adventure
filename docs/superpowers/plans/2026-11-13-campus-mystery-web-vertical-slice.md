@@ -10,7 +10,7 @@
 
 **Spec:** [2026-09-27-campus-mystery-game-design.md](../specs/2026-09-27-campus-mystery-game-design.md) (revised 2026-11-13: side-view 2D, web stack).
 
-**Status (2026-11-13):** Tasks 1–9 implemented and play-tested (Task 8 switched to top-down, Task 9 built the full Day 1); 43 unit tests pass; `npm run build` succeeds. Nothing committed yet. Where the build differs from the steps below, the notes in each task say so.
+**Status (2026-11-13):** Tasks 1–10 implemented and play-tested (Task 8 switched to top-down, Task 9 built the full Day 1, Task 10 added Day 2 and the UPM setting); 49 unit tests pass; `npm run build` succeeds. Nothing committed yet. Where the build differs from the steps below, the notes in each task say so.
 
 **Supersedes:** [2026-09-27-campus-mystery-vertical-slice.md](2026-09-27-campus-mystery-vertical-slice.md) (the Unity plan).
 
@@ -19,7 +19,7 @@
 - Side-view 2D. The player only walks left/right in this slice. The camera follows and stops at the room's edges.
 - Internal resolution 480×270, `pixelArt: true`, scaled to fit the window. Placeholder art is flat-colored rectangles generated in code.
 - Night mood: dim cool ambient light, warm point light over the suspect.
-- Fictional campus names only. Never real UPM names, buildings or branding in code, data or UI text.
+- Set at UPM Serdang with real UPM names, places and branding (revised 2026-11-13, see the spec's Setting). People and events stay fictional; witnesses are generic roles.
 - Noir-lite tone. No gore.
 - `game/src/logic/**` must not import Phaser or touch the DOM.
 - Keys: A/D or Left/Right walk, E interact, Tab open/close the board, Esc close the dialogue or board.
@@ -217,6 +217,29 @@ Builds Day 1 as the spec describes it, using the case in [the case design](../sp
 - [ ] **Step 5:** Art and scene: Farah by the west lamp, Daniel near the faculty door, Priya by the south-east bench; torn note by the tape, lab access card in the grass by the west hedge, tumbler visible inside the tape; examining the tape gives the Coffee Tumbler.
 - [ ] **Step 6:** Board: suspects and the victim on the right, clues on the left in up to two columns; hovering a card shows its full text in a strip at the bottom; a valid link toasts its insight; an invalid one says "No connection you can prove yet."
 - [ ] **Step 7:** Play-test: meet all three, examine the scene, collect all six Day 1 clues, make all four links in either direction, and Day 1 completes only after the five goals; the board stays readable with every Day 1 card on it.
+
+### Task 10: Day 2 — days, locations and three new rooms
+
+Implements Day 2 from [the case design](../specs/2026-11-13-campus-mystery-case-design.md): the library, the security office and the faculty pantry open up; Farah is cleared; Daniel's card story falls apart.
+
+**Files:**
+- Modify: `game/src/logic/gameState.ts` (+ test): current day, goals per day, `advanceDay()`
+- Create: `game/src/logic/days.ts` (+ test): `availableOn(item: { days?: readonly number[] }, day: number): boolean` (no `days` = every day)
+- Replace `game/src/data/day1.ts` with `case.ts` (clues, people, looks, links), `dialogue.ts`, `days.ts` (title, time of day, goals, hint, start spawn per day), `locations.ts` (courtyard, library, security, faculty: NPCs, floor clues, examine spots, exits, room layout). `content.test.ts` replaces `day1.test.ts` and checks every day.
+- Create: `game/src/art/interiors.ts` (room floors/walls and furniture), `game/src/scenes/BootScene.ts`, `WorldScene.ts` (movement, interaction, NPCs, clues, exits — shared), `CourtyardScene.ts`, `RoomScene.ts`; delete `Day1Scene.ts`
+- Modify: `game/src/ui/overlays.ts` (HUD shows day/place/time, day title card, per-day completion message)
+
+**Decisions:**
+- Exits are E-interactions ("Enter the library"), never walk-off edges, so nobody changes room by accident. An exit closed today shows its reason ("The library's closed at this hour.").
+- The day ends at the courtyard's south path ("Head home"), only once that day's goals are met. If the next day isn't built yet, it says so.
+- Picked-up clues stay picked up when the player comes back to a room.
+- Rooms are at least 480×272 so the camera never shows outside them.
+
+**Day 2 content:** Mrs. Lim (librarian), Encik Rahman (security guard), Kak Ani (cleaner); Farah in the library, Daniel in the faculty corridor, Priya on her courtyard bench, each with new lines. Clues: Library Gate Log, Door Access Log, Cleaner's Statement. Links: Gate Log ↔ Farah's Alibi (`farah_cleared`), Door Log ↔ Lab Access Card (`daniel_card_lie`), Door Log ↔ Daniel's Alibi (`daniel_left_lab`), Cleaner's Statement ↔ Coffee Tumbler (`tumbler_at_pantry`). Goals: `met_librarian`, `met_guard`, `met_cleaner`, `farah_cleared`.
+
+- [ ] **Step 1: Tests first.** `gameState.test.ts`: starts on day 1; `isDayComplete()` checks the current day's goals; `advanceDay()` moves to day 2 and notifies. `days.test.ts`: no `days` → available; `[2]` → not on day 1, yes on day 2. `content.test.ts`: every reference resolves (nodes, clues, looks, exit targets, link ends), and playing each day in order using only what's available that day completes it.
+- [ ] **Step 2:** Run, see them fail. **Step 3:** Implement. **Step 4:** Run, see them pass.
+- [ ] **Step 5:** Play-test: finish Day 1, head home, see the Day 2 card, visit all three rooms and back, meet the three witnesses, make the Day 2 links, see Day 2 complete; returning to a room doesn't bring picked-up clues back.
 
 ## Later (not this plan)
 

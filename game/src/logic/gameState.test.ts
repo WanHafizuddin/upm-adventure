@@ -4,21 +4,44 @@ import { GameState } from './gameState';
 function makeState() {
   return new GameState(
     [{ clueId: 'torn_note', targetId: 'suspect_a', unlockFlags: ['linked_note_to_suspect_a'] }],
-    ['met_suspect_a', 'linked_note_to_suspect_a'],
+    { 1: ['met_suspect_a', 'linked_note_to_suspect_a'], 2: ['met_librarian'] },
   );
 }
 
 describe('GameState', () => {
-  it('starts with Day 1 incomplete', () => {
-    expect(makeState().isDay1Complete()).toBe(false);
+  it('starts on day 1 with the day incomplete', () => {
+    const state = makeState();
+    expect(state.day).toBe(1);
+    expect(state.isDayComplete()).toBe(false);
   });
 
-  it('needs both the meeting and the board link to finish Day 1', () => {
+  it('needs every goal of the current day', () => {
     const state = makeState();
     state.setFlag('met_suspect_a');
-    expect(state.isDay1Complete()).toBe(false);
+    expect(state.isDayComplete()).toBe(false);
     state.connect('torn_note', 'suspect_a');
-    expect(state.isDay1Complete()).toBe(true);
+    expect(state.isDayComplete()).toBe(true);
+  });
+
+  it('moves to the next day and checks that day’s goals', () => {
+    const state = makeState();
+    const listener = vi.fn();
+    state.onChange(listener);
+
+    state.advanceDay();
+
+    expect(state.day).toBe(2);
+    expect(listener).toHaveBeenCalledTimes(1);
+    expect(state.isDayComplete()).toBe(false);
+    state.setFlag('met_librarian');
+    expect(state.isDayComplete()).toBe(true);
+  });
+
+  it('treats a day with no listed goals as complete', () => {
+    const state = makeState();
+    state.advanceDay();
+    state.advanceDay();
+    expect(state.isDayComplete()).toBe(true);
   });
 
   it('tells listeners about pickups, flags and valid links', () => {

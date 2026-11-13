@@ -1,17 +1,18 @@
 import * as Phaser from 'phaser';
-import { LIT_WINDOWS, WINDOW_BAY_X, createSprites } from '../art/sprites';
-import { CLUES, EXAMINE_SPOTS, FLOOR_CLUES, NPCS, PEOPLE, PLAYER_LOOK, type FloorClue, type NpcSpec } from '../data/day1';
+import { signTexture } from '../art/signage';
+import { CLUES } from '../data/case';
+import { LAST_DAY, daySpec, type Spawn } from '../data/days';
+import { LOCATIONS, type ExamineSpot, type ExitSpec, type FloorClue, type LocationSpec, type NpcPlacement } from '../data/locations';
+import { availableOn } from '../logic/days';
 import type { GameState } from '../logic/gameState';
 import { pickNearest } from '../logic/interaction';
 import { facingFor, moveVector, type Facing } from '../logic/movement';
 import type { Overlays } from '../ui/overlays';
-import { BUILDING_H, DOOR_X, MAP_H, MAP_W, PLAZA } from './courtyardLayout';
 
 const SPEED = 85; // pixels per second
 const REACH = 24; // how close the player's feet must be to interact
 const STEP_SECONDS = 0.16; // time per walking frame
-const LAMP_LIGHT = 0xffa431;
-const AMBIENT = 0x7a76b8; // dim blue-violet night
+const FADE_MS = 220;
 
 interface Interactable {
   x: number;
@@ -21,7 +22,7 @@ interface Interactable {
   use: () => void;
 }
 
-interface PropOptions {
+export interface PropOptions {
   /** Footprint that blocks walking: width, height (sits on the ground line). */
   block?: [number, number];
   /** Raise the footprint above the ground line by this many pixels. */
@@ -29,46 +30,67 @@ interface PropOptions {
   shadow?: 'shadow_big' | 'shadow_small';
 }
 
-/** Day 1: the faculty courtyard at night, seen from above. */
-export class Day1Scene extends Phaser.Scene {
-  private player!: Phaser.Physics.Arcade.Image;
+export interface WorldSceneData {
+  spawn: Spawn;
+}
+
+/**
+ * Everything every location shares: the player, walking, talking, picking things up, exits and
+ * signs. Subclasses only draw their own surroundings in `buildWorld`.
+ */
+export abstract class WorldScene extends Phaser.Scene {
+  protected location!: LocationSpec;
+  protected player!: Phaser.Physics.Arcade.Image;
+  private spawn!: Spawn;
   private playerShadow!: Phaser.GameObjects.Image;
   private torch!: Phaser.GameObjects.Light;
   private facing: Facing = 'up';
   private walkTime = 0;
+  private leaving = false;
   private blockers: Phaser.GameObjects.Zone[] = [];
   private interactables: Interactable[] = [];
   private prompt!: Phaser.GameObjects.Text;
   private keys!: Record<string, Phaser.Input.Keyboard.Key>;
 
   constructor(
-    private readonly state: GameState,
-    private readonly overlays: Overlays,
+    key: string,
+    protected readonly state: GameState,
+    protected readonly overlays: Overlays,
   ) {
-    super('Day1');
+    super(key);
+  }
+
+  /** Draws the surroundings and returns the size of the walkable world. */
+  protected abstract buildWorld(): { w: number; h: number };
+
+  init(data: WorldSceneData): void {
+    this.spawn = data.spawn;
+    this.location = LOCATIONS[data.spawn.location];
+    this.facing = data.spawn.facing;
+    this.walkTime = 0;
+    this.leaving = false;
+    this.blockers = [];
+    this.interactables = [];
   }
 
   create(): void {
-    createSprites(this, PLAYER_LOOK, Object.fromEntries(NPCS.map((n) => [n.id, n.look])));
-    this.lights.enable().setAmbientColor(AMBIENT);
-    this.physics.world.setBounds(0, 0, MAP_W, MAP_H);
+    this.lights.enable();
+    const { w, h } = this.buildWorld();
+    this.physics.world.setBounds(0, 0, w, h);
 
-    this.buildCourtyard();
-    this.buildCrimeScene();
-    NPCS.forEach((npc) => this.addNpc(npc));
-    FLOOR_CLUES.forEach((placed) => this.addFloorClue(placed));
-    for (const spot of EXAMINE_SPOTS) {
-      this.interactables.push({
-        x: spot.x,
-        y: spot.y,
-        label: spot.label,
-        promptY: spot.y - 30,
-        use: () => this.overlays.openDialogue(spot.startNode),
-      });
+    const day = this.state.day;
+    const loc = this.location;
+    loc.npcs.filter((n) => availableOn(n, day)).forEach((n) => this.addNpc(n));
+    loc.floorClues.filter((c) => availableOn(c, day) && !this.state.inventory.has(c.clueId)).forEach((c) => this.addFloorClue(c));
+    loc.examine.filter((e) => availableOn(e, day)).forEach((e) => this.addExamine(e));
+    loc.exits.forEach((e) => this.addExit(e));
+    for (const sign of loc.signs) {
+      const key = signTexture(this, sign.text, sign.post ?? false);
+      if (sign.post) this.prop(key, sign.x, sign.y, { block: [4, 3] });
+      else this.add.image(sign.x, sign.y, key).setOrigin(0.5, 0).setDepth(-50); // on the back wall
     }
-    this.buildPlayer(DOOR_X, 520);
-    this.addFireflies();
 
+    this.buildPlayer();
     this.prompt = this.add
       .text(0, 0, '', { fontFamily: 'monospace', fontSize: '8px', color: '#ffe7b0', backgroundColor: '#0d0b1acc' })
       .setPadding(3, 1, 3, 1)
@@ -77,9 +99,10 @@ export class Day1Scene extends Phaser.Scene {
       .setVisible(false);
 
     const camera = this.cameras.main;
-    camera.setBounds(0, 0, MAP_W, MAP_H);
+    camera.setBounds(0, 0, w, h);
     camera.startFollow(this.player, true, 0.15, 0.15);
     camera.setRoundPixels(true);
+    camera.fadeIn(FADE_MS);
 
     const kb = this.input.keyboard!;
     const K = Phaser.Input.Keyboard.KeyCodes;
@@ -100,6 +123,8 @@ export class Day1Scene extends Phaser.Scene {
       three: kb.addKey(K.THREE),
       four: kb.addKey(K.FOUR),
     };
+
+    this.overlays.setPlace(loc.name);
   }
 
   update(_time: number, deltaMs: number): void {
@@ -116,7 +141,7 @@ export class Day1Scene extends Phaser.Scene {
     }
     // Read E even while blocked, so a press during dialogue doesn't fire after it closes.
     const interactPressed = JustDown(k.e);
-    const blocking = this.overlays.isBlocking();
+    const blocking = this.leaving || this.overlays.isBlocking();
 
     const v = blocking
       ? { x: 0, y: 0 }
@@ -144,21 +169,10 @@ export class Day1Scene extends Phaser.Scene {
     }
   }
 
-  private animatePlayer(v: { x: number; y: number }, seconds: number): void {
-    const moving = v.x !== 0 || v.y !== 0;
-    this.facing = facingFor(v, this.facing);
-    this.walkTime = moving ? this.walkTime + seconds : 0;
-    const pose = moving ? 1 + (Math.floor(this.walkTime / STEP_SECONDS) % 2) : 0;
-    this.player.setTexture(`player_${this.facing}_${pose}`);
-    this.player.setDepth(this.player.y);
-    this.playerShadow.setPosition(this.player.x, this.player.y);
-    this.torch.setPosition(this.player.x, this.player.y - 14);
-  }
-
-  // --- Building the courtyard --------------------------------------------
+  // --- Helpers for subclasses ----------------------------------------------------
 
   /** Places a prop with its base on the ground at (x, baseY). Lower props draw in front. */
-  private prop(key: string, x: number, baseY: number, opts: PropOptions = {}): Phaser.GameObjects.Image {
+  protected prop(key: string, x: number, baseY: number, opts: PropOptions = {}): Phaser.GameObjects.Image {
     if (opts.shadow) this.add.image(x, baseY, opts.shadow).setOrigin(0.5, 0.65).setDepth(-5000);
     const image = this.add.image(x, baseY, key).setOrigin(0.5, 1).setDepth(baseY).setLighting(true);
     if (opts.block) {
@@ -168,77 +182,53 @@ export class Day1Scene extends Phaser.Scene {
     return image;
   }
 
-  private block(cx: number, cy: number, w: number, h: number): void {
+  /** An invisible box the player can't walk through. */
+  protected block(cx: number, cy: number, w: number, h: number): void {
     const zone = this.add.zone(cx, cy, w, h);
     this.physics.add.existing(zone, true);
     this.blockers.push(zone);
   }
 
-  private lamp(x: number, baseY: number): void {
-    this.prop('lamp', x, baseY, { block: [6, 4], shadow: 'shadow_small' });
-    this.lights.addLight(x, baseY - 44, 95, LAMP_LIGHT, 3.2, 34);
-  }
+  // --- Moving between places and days ----------------------------------------------
 
-  private buildCourtyard(): void {
-    this.add.image(0, 0, 'ground').setOrigin(0).setDepth(-10000).setLighting(true);
-
-    // Faculty building along the top, with light spilling from the lit windows and the door.
-    this.add.image(0, 0, 'building').setOrigin(0).setDepth(BUILDING_H).setLighting(true);
-    this.block(MAP_W / 2, (BUILDING_H - 2) / 2, MAP_W, BUILDING_H - 2);
-    for (const bay of LIT_WINDOWS) this.lights.addLight(WINDOW_BAY_X(bay), BUILDING_H + 6, 85, 0xffc070, 2.6, 30);
-    this.lights.addLight(DOOR_X, BUILDING_H - 30, 70, 0xffcf8a, 1.6, 30);
-    this.interactables.push({
-      x: DOOR_X,
-      y: BUILDING_H + 4,
-      label: 'Try the door',
-      promptY: BUILDING_H - 12,
-      use: () => this.overlays.toast('Locked. Security sealed the building for the night.'),
+  private goTo(spawn: Spawn): void {
+    if (this.leaving) return;
+    this.leaving = true;
+    this.cameras.main.fadeOut(FADE_MS);
+    this.cameras.main.once('camerafadeoutcomplete', () => {
+      this.scene.start(LOCATIONS[spawn.location].scene, { spawn } satisfies WorldSceneData);
     });
-
-    // Hedges on the flower beds, leaving the door path clear.
-    for (let x = 34; x <= 330; x += 30) this.prop(x % 60 === 4 ? 'bush_1' : 'bush_0', x, BUILDING_H + 26, { block: [28, 6] });
-    for (let x = 440; x <= 740; x += 30) this.prop(x % 60 === 20 ? 'bush_1' : 'bush_0', x, BUILDING_H + 26, { block: [28, 6] });
-
-    // Fountain in the middle of the plaza.
-    this.prop('fountain', PLAZA.x, PLAZA.y + 38, { block: [108, 50], blockLift: 6 });
-
-    // Rain trees around the edges.
-    const trees: Array<[number, number, number]> = [
-      [52, 196, 0], [150, 222, 1], [40, 388, 2], [124, 470, 0], [48, 540, 1],
-      [716, 192, 1], [624, 224, 2], [736, 392, 0], [650, 484, 1], [730, 540, 2],
-      [250, 520, 2], [520, 534, 0],
-    ];
-    for (const [x, y, variant] of trees) this.prop(`tree_${variant}`, x, y, { block: [12, 6], shadow: 'shadow_big' });
-
-    // Lamp posts and benches.
-    this.lamp(338, 198);
-    this.lamp(430, 198);
-    this.lamp(222, 282);
-    this.lamp(590, 300);
-    this.lamp(430, 468);
-    this.prop('bench', 284, 282, { block: [34, 6] });
-    this.prop('bench', 560, 452, { block: [34, 6] });
   }
 
-  private buildCrimeScene(): void {
-    this.prop('tape', 512, 352, { block: [100, 34], blockLift: 2 });
-    this.prop('briefcase', 534, 340);
-    this.prop('tumbler', 500, 334);
-    this.prop('marker_1', 486, 332);
-    this.prop('marker_2', 542, 324);
+  private tryEndDay(): void {
+    if (!this.state.isDayComplete()) {
+      this.overlays.toast("Not yet. There's still more to look into today.");
+      return;
+    }
+    if (this.state.day >= LAST_DAY) {
+      this.overlays.toast(`That's the end of Day ${this.state.day}. The rest of the case is still being written.`);
+      return;
+    }
+    this.leaving = true;
+    this.cameras.main.fadeOut(600);
+    this.cameras.main.once('camerafadeoutcomplete', () => {
+      this.state.advanceDay();
+      const next = daySpec(this.state.day)!;
+      this.overlays.showDayCard(next);
+      this.scene.start(LOCATIONS[next.start.location].scene, { spawn: next.start } satisfies WorldSceneData);
+    });
   }
 
-  private addNpc(npc: NpcSpec): void {
-    const person = PEOPLE.find((p) => p.id === npc.id);
-    // "Farah", "Daniel", "Dr. Priya": short enough for the prompt.
-    const name = person?.name ?? npc.id;
-    const shortName = name.startsWith('Dr. ') ? name.split(' ').slice(0, 2).join(' ') : name.split(' ')[0];
+  // --- Things in the world -----------------------------------------------------------
+
+  private addNpc(npc: NpcPlacement): void {
     this.add.image(npc.x, npc.y, 'shadow_small').setOrigin(0.5, 0.65).setDepth(-5000);
     const sprite = this.prop(`${npc.id}_${npc.facing}_0`, npc.x, npc.y, { block: [10, 6] });
+    const from = npc.talkFrom ?? { x: npc.x, y: npc.y };
     this.interactables.push({
-      x: npc.x,
-      y: npc.y,
-      label: `Talk to ${shortName}`,
+      x: from.x,
+      y: from.y,
+      label: `Talk to ${npc.label}`,
       promptY: npc.y - 28,
       use: () => {
         // Turn to face the player while talking.
@@ -271,9 +261,36 @@ export class Day1Scene extends Phaser.Scene {
     this.interactables.push(interactable);
   }
 
-  private buildPlayer(x: number, y: number): void {
+  private addExamine(spot: ExamineSpot): void {
+    this.interactables.push({
+      x: spot.x,
+      y: spot.y,
+      label: spot.label,
+      promptY: spot.y - 30,
+      use: () => this.overlays.openDialogue(spot.startNode),
+    });
+  }
+
+  private addExit(exit: ExitSpec): void {
+    const open = availableOn(exit, this.state.day);
+    let use: () => void;
+    if (!exit.to) use = () => this.tryEndDay();
+    else if (open) {
+      const to = exit.to;
+      use = () => this.goTo(to);
+    } else if (exit.closedText) {
+      const text = exit.closedText;
+      use = () => this.overlays.toast(text);
+    } else return;
+    this.interactables.push({ x: exit.x, y: exit.y, label: exit.label, promptY: exit.y - 12, use });
+  }
+
+  // --- The player ----------------------------------------------------------------------
+
+  private buildPlayer(): void {
+    const { x, y } = this.spawn;
     this.playerShadow = this.add.image(x, y, 'shadow_small').setOrigin(0.5, 0.65).setDepth(-5000);
-    this.player = this.physics.add.image(x, y, 'player_up_0').setOrigin(0.5, 1).setLighting(true);
+    this.player = this.physics.add.image(x, y, `player_${this.facing}_0`).setOrigin(0.5, 1).setLighting(true);
     const body = this.player.body as Phaser.Physics.Arcade.Body;
     body.setSize(10, 6).setOffset(3, 20);
     this.player.setCollideWorldBounds(true);
@@ -282,23 +299,14 @@ export class Day1Scene extends Phaser.Scene {
     this.torch = this.lights.addLight(x, y - 14, 60, 0xd6dcff, 1.2, 24);
   }
 
-  private addFireflies(): void {
-    const r = new Phaser.Math.RandomDataGenerator(['fireflies']);
-    for (let i = 0; i < 14; i++) {
-      const x = r.between(20, MAP_W - 20);
-      const y = r.between(BUILDING_H + 30, MAP_H - 10);
-      const fly = this.add.image(x, y, 'firefly').setDepth(9000).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0.2);
-      this.tweens.add({
-        targets: fly,
-        x: x + r.between(-24, 24),
-        y: y + r.between(-16, 16),
-        alpha: { from: 0.15, to: 0.95 },
-        duration: r.between(1800, 3600),
-        delay: r.between(0, 2000),
-        yoyo: true,
-        repeat: -1,
-        ease: 'Sine.easeInOut',
-      });
-    }
+  private animatePlayer(v: { x: number; y: number }, seconds: number): void {
+    const moving = v.x !== 0 || v.y !== 0;
+    this.facing = facingFor(v, this.facing);
+    this.walkTime = moving ? this.walkTime + seconds : 0;
+    const pose = moving ? 1 + (Math.floor(this.walkTime / STEP_SECONDS) % 2) : 0;
+    this.player.setTexture(`player_${this.facing}_${pose}`);
+    this.player.setDepth(this.player.y);
+    this.playerShadow.setPosition(this.player.x, this.player.y);
+    this.torch.setPosition(this.player.x, this.player.y - 14);
   }
 }

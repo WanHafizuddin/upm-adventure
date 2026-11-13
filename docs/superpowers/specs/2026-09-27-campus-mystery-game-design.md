@@ -8,7 +8,11 @@ Solo developer project. The developer's first serious game project.
 
 ## Setting
 
-- Fictional university, name and branding inspired by UPM's real layout/architecture but not using real UPM names, buildings, or branding. This avoids implying a real crime occurred at a real named institution.
+- **Set at Universiti Putra Malaysia (UPM), Serdang** (developer's call, 2026-11-13, replacing the earlier "fictional campus only" rule, so the game feels like home to UPM students). The developer chose full UPM branding, including the official logo.
+- Real UPM touches: the name, the motto *Berilmu Berbakti*, UPM's red/white/grey colours, real places (Perpustakaan Sultan Abdul Samad, Fakulti Sains, kolej kediaman such as KTDI), Malay signage, and campus life (motorcycles, the campus bus, the surau, notice boards).
+- **People and events stay fictional.** Witnesses are generic roles (a librarian on night duty, a guard, a cleaner), never named real post-holders. The title card carries a disclaimer: fan-made, fictional, not an official UPM production.
+- The official logo is supplied by the developer as `game/public/upm-logo.png`; the game shows it on the title card when the file is present. Pixel art in the game uses lettering ("UPM", the motto), not a redrawn crest.
+- Commercial use of UPM's name and logo would need UPM's permission.
 - Working title: *Case Files: Serdang Raya* (placeholder, can change).
 - Tone: noir-lite. Murder is discussed and investigated seriously; crime scenes are implied via props/details, not graphic gore.
 
@@ -16,6 +20,7 @@ Solo developer project. The developer's first serious game project.
 
 - **2026-11-13: 3D to 2D.** The developer asked for 2D and left the style to Claude, who picked side-view pixel art. The 3rd-person camera, stylized-realistic 3D art and the "3D Free Modular Kit" are retired.
 - **2026-11-13: Unity to the web.** The same day, the developer dropped Unity and left the technology choice to Claude. The game is now a browser game built with Phaser 4 and TypeScript (see Technology). Unity, C#, ScriptableObjects and the Unity plan are retired. The game design itself (story, loop, systems, endings) is unchanged.
+- **2026-11-13: real UPM setting.** The developer asked for real UPM elements, then full UPM branding. See Setting.
 - **2026-11-13: side-view to top-down.** After seeing the side-view build, the developer asked for a top-down view, pointing to a top-down pixel-art reference: deep blue/purple night palette, warm lantern light, dense foliage, chunky outlined props. Claude made the specific calls below to match that feel with original art. Side-view is retired.
 
 ## Technology (Claude's call)

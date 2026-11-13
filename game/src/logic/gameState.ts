@@ -13,12 +13,24 @@ export class GameState {
   readonly flags = new Flags();
   readonly validator: DeductionValidator;
   private readonly listeners: Array<() => void> = [];
+  private currentDay = 1;
 
+  /** `dayGoals[n]` lists the flags that finish day n. */
   constructor(
     links: readonly DeductionLink[],
-    private readonly day1Required: readonly string[],
+    private readonly dayGoals: Readonly<Record<number, readonly string[]>>,
   ) {
     this.validator = new DeductionValidator(links);
+  }
+
+  get day(): number {
+    return this.currentDay;
+  }
+
+  /** Moves on to the next day of the case. */
+  advanceDay(): void {
+    this.currentDay++;
+    this.notify();
   }
 
   /** Returns true if the clue was new. */
@@ -55,8 +67,9 @@ export class GameState {
     return result;
   }
 
-  isDay1Complete(): boolean {
-    return isDayComplete(this.day1Required, this.flags);
+  /** Whether every goal of the current day is done. */
+  isDayComplete(): boolean {
+    return isDayComplete(this.dayGoals[this.currentDay] ?? [], this.flags);
   }
 
   onChange(listener: () => void): void {

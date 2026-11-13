@@ -1,6 +1,6 @@
 # Case Files: Serdang Raya — web game
 
-Top-down pixel-art murder mystery on a fictional campus, built with Phaser 4 + TypeScript + Vite.
+Top-down pixel-art murder mystery set at UPM Serdang, built with Phaser 4 + TypeScript + Vite.
 Design: [../docs/superpowers/specs/2026-09-27-campus-mystery-game-design.md](../docs/superpowers/specs/2026-09-27-campus-mystery-game-design.md)
 
 ## Run it
@@ -18,10 +18,14 @@ WASD or arrows move · E interact · Tab deduction board · 1–4 pick a reply �
 
 ## Where things live
 
-- `src/logic/` — game rules (inventory, flags, dialogue, deduction, day completion). Plain TypeScript, no Phaser, each with a `.test.ts`.
-- `src/data/day1.ts` — Day 1 content: clues, people, where everyone stands, dialogue, board links, Day 1 goals. `day1.test.ts` checks the content has no dead ends. New days are mostly new data files.
-- `src/scenes/Day1Scene.ts` — the faculty courtyard, seen from above: props, lights, walking, interacting.
-- `src/art/` — all pixel art, generated in code (`sprites.ts`), using the night palette in `palette.ts`.
-- `src/ui/` — HTML overlays: dialogue box, deduction board, toasts, HUD.
+- `src/logic/` — game rules (inventory, flags, dialogue, deduction, days). Plain TypeScript, no Phaser, each with a `.test.ts`.
+- `src/data/` — the story as data: `case.ts` (clues, people, looks, board links), `dialogue.ts`, `days.ts` (each day's goals and title card), `locations.ts` (every place, who's there on which day, exits, furniture, signs). `content.test.ts` plays every day through and catches dead ends.
+- `src/scenes/` — `WorldScene.ts` (walking, talking, clues, exits), `CourtyardScene.ts`, `RoomScene.ts` (any indoor room from data), `BootScene.ts`.
+- `src/art/` — all pixel art, generated in code: courtyard (`sprites.ts`), rooms and furniture (`interiors.ts`), UPM signage and the pixel font (`signage.ts`, `pixelFont.ts`).
+- `src/ui/` — HTML overlays: day title card, dialogue box, deduction board, toasts, HUD.
+
+## The UPM logo
+
+The title card has a slot for the official UPM logo. Save it as `game/public/upm-logo.png` (a transparent PNG about 200 px tall works well) and it appears automatically; without it, the card simply shows the university's name. The logo isn't included in this repository.
 
 In `npm run dev`, the browser console has `__game` and `__state` for poking at the running game.

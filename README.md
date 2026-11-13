@@ -1,21 +1,23 @@
 # Case Files: Serdang Raya
 
-A top-down pixel-art murder mystery set on a university campus at night. You play a student sleuth looking into the death of a lecturer: explore the campus, question suspects, collect clues, and link the evidence on a deduction board before making an accusation.
+A top-down pixel-art murder mystery set at Universiti Putra Malaysia (UPM), Serdang, at night. You play a student sleuth looking into the death of a lecturer: explore the campus, question suspects, collect clues, and link the evidence on a deduction board before making an accusation.
 
-The campus, characters and events are fictional. No real institution is depicted.
+A fan-made game: every character and event is fictional, and it is not an official UPM production.
 
 ## Status
 
-**Day 1 is playable** in the browser: the night Dr. Rosli Kamarudin is found poisoned by the faculty fountain.
+**Days 1 and 2 are playable** in the browser. It starts on the night Dr. Rosli Kamarudin is found poisoned by the fountain outside Fakulti Sains.
 
 - a faculty courtyard at night, seen from above, with lamp-lit paths, a fountain plaza and a taped-off crime scene
 - three suspects to question (a PhD student, the lab manager and a rival lecturer), each with their own story and alibi
 - six clues: two to find on the ground, one from examining the crime scene, three from what the suspects tell you
 - some questions only open up once you're holding the right clue
 - a deduction board where linking clues to people reveals what they mean
-- Day 1 ends once you've met everyone, examined the scene and worked out how he died
+- Day 1 ends once you've met everyone, examined the scene and worked out how he died; then you head back to KTDI
+- Day 2 opens PSAS, the security office and the Fakulti Sains ground floor, with three new witnesses, three new clues and the evidence that clears one suspect
+- UPM all around: the big red UPM sign, banners, Malay signage, motorcycles and the campus bus stop
 
-Still to come: Days 2–5 (library, security office, labs), clearing or breaking each alibi, and the final accusation with multiple endings. The full case is planned in [the case design](docs/superpowers/specs/2026-11-13-campus-mystery-case-design.md). It contains spoilers.
+Still to come: Days 3–5 (Lab 2, Dr. Rosli's office, toxicology), breaking the last alibis, and the final accusation with multiple endings. The full case is planned in [the case design](docs/superpowers/specs/2026-11-13-campus-mystery-case-design.md). It contains spoilers.
 
 ## Play it locally
 
