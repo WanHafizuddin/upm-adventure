@@ -10,7 +10,7 @@
 
 **Spec:** [2026-09-27-campus-mystery-game-design.md](../specs/2026-09-27-campus-mystery-game-design.md) (revised 2026-11-13: side-view 2D, web stack).
 
-**Status (2026-11-13):** Tasks 1–11 implemented and play-tested (Task 8 switched to top-down, Task 9 built the full Day 1, Task 10 added Day 2 and the UPM setting, Task 11 added Day 3); 51 unit tests pass; `npm run build` succeeds. Nothing committed yet. Where the build differs from the steps below, the notes in each task say so.
+**Status (2026-11-13):** Tasks 1–12 implemented and play-tested — the whole case, Days 1–5 and all three endings (Task 8 switched to top-down, 9 built the full Day 1, 10 added Day 2 and the UPM setting, 11 Day 3, 12 the finale); 57 unit tests pass; `npm run build` succeeds. Nothing committed yet. Where the build differs from the steps below, the notes in each task say so.
 
 **Supersedes:** [2026-09-27-campus-mystery-vertical-slice.md](2026-09-27-campus-mystery-vertical-slice.md) (the Unity plan).
 
@@ -252,6 +252,22 @@ Implements Day 3 from the case design: Daniel's alibi breaks and Priya is cleare
 - [ ] **Step 1:** Data first; `content.test.ts` must pass for Days 1–3 (reachability, no clue a day needs but can't offer, playable in order).
 - [ ] **Step 2:** Art and the optional doorway.
 - [ ] **Step 3:** Play-test Day 3: reach all four rooms and back, collect the three clues, make the links, see Day 3 complete; check the rooms look right.
+
+### Task 12: The finale — Day 4, Day 5 and the endings
+
+**Day 4 (the toxicology report):** Inspektor Aziz (a fictional police inspector) waits by the crime scene and hands over the Toxicology Report. Daniel is still in Makmal 2 and can be confronted with each piece of evidence. Objectives: get the report (`got_toxicology`), on the board match the poison to the stores (`poison_from_stores`: Toxicology Report ↔ Rosli's Audit Notes), confront Daniel with the report (`confronted_daniel`). Optional link: Toxicology Report ↔ Coffee Tumbler.
+
+**Day 5 (the accusation):** everyone gathers in the courtyard. Talking to Inspektor Aziz offers "I'm ready to name the killer", which opens the accusation panel: pick one suspect and exactly three pieces of evidence.
+
+**Produces:**
+- `logic/accusation.ts`: `judgeAccusation(suspectId, evidenceIds, rules): { ending: 'true' | 'unproven' | 'wrong' | 'not_ready'; missing: string[] }`. Fewer than `rules.evidenceNeeded` distinct clues → `not_ready`; wrong suspect → `wrong`; right suspect covering every evidence group (opportunity, means, motive) → `true`; otherwise `unproven`, with `missing` naming the uncovered groups.
+- `DialogueChoice.action?: 'accuse'` — choosing it closes the dialogue and opens the accusation panel.
+- `case.ts`: `ACCUSATION` rules (culprit `daniel`, 3 clues, groups: opportunity = Door Access Log or Pre-signed Logbook, means = Toxicology Report or Cleaner's Statement, motive = Rosli's Audit Notes) and `ENDINGS` text.
+- Ending screen with "Try the accusation again" (after a wrong or unproven ending) and "Play again from Day 1".
+
+- [ ] **Step 1: Tests first.** `accusation.test.ts`: not ready with 2 clues; wrong suspect even with perfect evidence; true ending with logbook + toxicology + audit notes; unproven without motive (missing = ['motive']); duplicate clues don't count twice. `content.test.ts`: the rules only name real clues and a real suspect, and a winning evidence set can be collected by Day 5.
+- [ ] **Step 2:** Run, see them fail. **Step 3:** Implement. **Step 4:** Run, see them pass.
+- [ ] **Step 5:** Play-test Day 4, then Day 5: each ending is reachable, and retrying works.
 
 ## Later (not this plan)
 

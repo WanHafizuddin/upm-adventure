@@ -6,7 +6,7 @@ A fan-made game: every character and event is fictional, and it is not an offici
 
 ## Status
 
-**Days 1 to 3 are playable** in the browser. It starts on the night Dr. Rosli Kamarudin is found poisoned by the fountain outside Fakulti Sains.
+**The whole case is playable** in the browser, from the first night to the final accusation. It starts on the night Dr. Rosli Kamarudin is found poisoned by the fountain outside Fakulti Sains.
 
 - a faculty courtyard at night, seen from above, with lamp-lit paths, a fountain plaza and a taped-off crime scene
 - three suspects to question (a PhD student, the lab manager and a rival lecturer), each with their own story and alibi
@@ -16,10 +16,12 @@ A fan-made game: every character and event is fictional, and it is not an offici
 - Day 1 ends once you've met everyone, examined the scene and worked out how he died; then you head back to KTDI
 - Day 2 opens PSAS, the security office and the Fakulti Sains ground floor, with three new witnesses, three new clues and the evidence that clears one suspect
 - Day 3 opens Makmal 2 and the upstairs offices: a suspicious logbook, the victim's audit notes and a call record that settle who's lying
+- Day 4 brings the police toxicology report and a confrontation in the lab
+- Day 5 is the accusation: name the killer and pick three pieces of evidence. There are three endings, and a weak or wrong accusation can be tried again
 - A "Today" checklist always shows what's left to do
 - UPM all around: the big red UPM sign, banners, Malay signage, motorcycles and the campus bus stop
 
-Still to come: Day 4 (the toxicology report and confrontations) and Day 5, the final accusation with multiple endings. The full case is planned in [the case design](docs/superpowers/specs/2026-11-13-campus-mystery-case-design.md). It contains spoilers.
+Ideas for later: more locations around campus, walk-cycle animation, sound and music, and the official UPM logo on the title card. The full case is planned in [the case design](docs/superpowers/specs/2026-11-13-campus-mystery-case-design.md). It contains spoilers.
 
 ## Play it locally
 

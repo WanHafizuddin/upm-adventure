@@ -66,6 +66,26 @@ export const DAYS: readonly DaySpec[] = [
     hint: 'Makmal 2 and the upstairs offices are open again. Somebody has been lying. Find out who.',
     start: COURTYARD_START,
   },
+  {
+    day: 4,
+    subtitle: 'The toxicology report',
+    time: 'Evening',
+    objectives: [
+      { flag: 'got_toxicology', text: 'Get the toxicology report from Inspektor Aziz (courtyard)' },
+      { flag: 'poison_from_stores', text: "Board (Tab): match the poison to what's missing from the stores" },
+      { flag: 'confronted_daniel', text: 'Confront Daniel in Makmal 2 with the toxicology report' },
+    ],
+    hint: 'The police lab has finished with the coffee. Find out what was in it, and who could have put it there.',
+    start: COURTYARD_START,
+  },
+  {
+    day: 5,
+    subtitle: 'The accusation',
+    time: 'Evening',
+    objectives: [{ flag: 'accused', text: 'Tell Inspektor Aziz who did it, and prove it with three pieces of evidence' }],
+    hint: 'Everyone is waiting in the courtyard. Name the killer, and choose the three pieces of evidence that prove it.',
+    start: COURTYARD_START,
+  },
 ];
 
 export const DAY_GOALS: Readonly<Record<number, readonly string[]>> = Object.fromEntries(

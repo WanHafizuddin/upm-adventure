@@ -397,4 +397,102 @@ const day3: Array<[string, DialogueNode]> = [
   }),
 ];
 
-export const DIALOGUE: Readonly<Record<string, DialogueNode>> = Object.fromEntries([...day1, ...day2, ...day3]);
+// --- Day 4 -----------------------------------------------------------------------
+
+const aziz4Topics: DialogueChoice[] = [
+  { text: 'What was the poison?', next: 'aziz4_poison' },
+  { text: 'Who are you looking at?', next: 'aziz4_suspects' },
+  leave,
+];
+
+const daniel4Topics: DialogueChoice[] = [
+  { text: 'Show him the door access log', next: 'daniel4_doors', requiresClue: 'door_access_log' },
+  { text: 'Show him the logbook', next: 'daniel4_logbook', requiresClue: 'presigned_logbook' },
+  { text: 'Show him the toxicology report', next: 'daniel4_tox', requiresClue: 'toxicology_report' },
+  leave,
+];
+
+const day4: Array<[string, DialogueNode]> = [
+  node({
+    id: 'aziz4_intro',
+    speaker: 'Inspektor Aziz',
+    text: "Inspektor Aziz. I hear a student has been doing my job for me. The toxicology report came back this morning. Strictly speaking you shouldn't see this — so read it quickly.",
+    setsFlag: 'got_toxicology',
+    givesClue: 'toxicology_report',
+    choices: aziz4Topics,
+  }),
+  node({ id: 'aziz4_more', speaker: 'Inspektor Aziz', text: 'Anything else?', choices: aziz4Topics }),
+  node({
+    id: 'aziz4_poison',
+    speaker: 'Inspektor Aziz',
+    text: "A laboratory reagent. Not something you buy at the kedai. You'd only find it in a chemistry store — like the one in Makmal 2.",
+    choices: [back('aziz4_more'), leave],
+  }),
+  node({
+    id: 'aziz4_suspects',
+    speaker: 'Inspektor Aziz',
+    text: "Everyone who was near that fountain. Bring me something solid and I'll listen. Tomorrow evening I'll have them all here in the courtyard.",
+    choices: [back('aziz4_more'), leave],
+  }),
+
+  node({
+    id: 'daniel4_intro',
+    speaker: 'Daniel Wong',
+    text: "You again. The police have been through every bottle in here. What more could you possibly want?",
+    choices: daniel4Topics,
+  }),
+  node({ id: 'daniel4_more', speaker: 'Daniel Wong', text: '…What.', choices: daniel4Topics }),
+  node({
+    id: 'daniel4_doors',
+    speaker: 'Daniel Wong',
+    text: "So my spare card went out for a bit. I went to get teh tarik. Since when is that a crime?",
+    choices: [back('daniel4_more'), leave],
+  }),
+  node({
+    id: 'daniel4_logbook',
+    speaker: 'Daniel Wong',
+    text: 'I told you. Everyone signs ahead.',
+    choices: [back('daniel4_more'), leave],
+  }),
+  node({
+    id: 'daniel4_tox',
+    speaker: 'Daniel Wong',
+    text: '…Where did you get that? No. I want a lawyer. I am not saying anything else to you.',
+    setsFlag: 'confronted_daniel',
+    choices: [leave],
+  }),
+];
+
+// --- Day 5 -----------------------------------------------------------------------
+
+const day5: Array<[string, DialogueNode]> = [
+  node({
+    id: 'aziz5_intro',
+    speaker: 'Inspektor Aziz',
+    text: 'Everyone is here, as promised. So. Who killed Dr. Rosli Kamarudin?',
+    choices: [
+      { text: "I'm ready to name the killer", next: null, action: 'accuse' },
+      { text: 'Not yet', next: null },
+    ],
+  }),
+  node({
+    id: 'farah5',
+    speaker: 'Farah Idris',
+    text: 'Whatever happens today… thank you for believing me when nobody else did.',
+    choices: [leave],
+  }),
+  node({
+    id: 'daniel5',
+    speaker: 'Daniel Wong',
+    text: "This is ridiculous. I have a lab to run. Can we get this over with?",
+    choices: [leave],
+  }),
+  node({
+    id: 'priya5',
+    speaker: 'Dr. Priya Nair',
+    text: 'Go on, then. Say it out loud. Rosli deserves that much.',
+    choices: [leave],
+  }),
+];
+
+export const DIALOGUE: Readonly<Record<string, DialogueNode>> = Object.fromEntries([...day1, ...day2, ...day3, ...day4, ...day5]);

@@ -22,7 +22,7 @@ WASD or arrows move · E interact · Tab deduction board · 1–4 pick a reply �
 - `src/data/` — the story as data: `case.ts` (clues, people, looks, board links), `dialogue.ts`, `days.ts` (each day's goals and title card), `locations.ts` (every place, who's there on which day, exits, furniture, signs). `content.test.ts` plays every day through and catches dead ends.
 - `src/scenes/` — `WorldScene.ts` (walking, talking, clues, exits), `CourtyardScene.ts`, `RoomScene.ts` (any indoor room from data), `BootScene.ts`.
 - `src/art/` — all pixel art, generated in code: courtyard (`sprites.ts`), rooms and furniture (`interiors.ts`), UPM signage and the pixel font (`signage.ts`, `pixelFont.ts`).
-- `src/ui/` — HTML overlays: day title card, dialogue box, deduction board, toasts, HUD.
+- `src/ui/` — HTML overlays: day title card, "Today" checklist, dialogue box, deduction board, the final accusation and ending screens, toasts.
 
 ## The UPM logo
 

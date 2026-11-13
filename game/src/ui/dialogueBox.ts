@@ -1,4 +1,4 @@
-import { isChoiceAvailable, resolveChoice, type DialogueNode } from '../logic/dialogue';
+import { isChoiceAvailable, resolveChoice, type DialogueChoice, type DialogueNode } from '../logic/dialogue';
 import type { Clue } from '../logic/clues';
 import type { GameState } from '../logic/gameState';
 
@@ -16,6 +16,8 @@ export class DialogueBox {
     private readonly nodes: Readonly<Record<string, DialogueNode>>,
     private readonly clues: Readonly<Record<string, Clue>>,
     private readonly toast: (text: string) => void,
+    /** Called when the player picks a choice that triggers something (e.g. the accusation). */
+    private readonly onAction: (action: NonNullable<DialogueChoice['action']>) => void,
   ) {
     this.el = document.createElement('section');
     this.el.className = 'panel dialogue';
@@ -76,6 +78,12 @@ export class DialogueBox {
 
   private choose(index: number): void {
     if (!this.current) return;
+    const action = this.current.choices[index]?.action;
+    if (action) {
+      this.close();
+      this.onAction(action);
+      return;
+    }
     const next = resolveChoice(this.current, index, this.nodes);
     if (next === null) this.close();
     else this.show(next);

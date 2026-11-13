@@ -206,7 +206,7 @@ export abstract class WorldScene extends Phaser.Scene {
       return;
     }
     if (this.state.day >= LAST_DAY) {
-      this.overlays.toast(`That's the end of Day ${this.state.day}. The rest of the case is still being written.`);
+      this.overlays.toast('The case is closed, one way or another. Talk to Inspektor Aziz to try it again.');
       return;
     }
     this.leaving = true;

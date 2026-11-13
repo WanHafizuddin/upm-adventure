@@ -4,6 +4,7 @@ import type { Clue } from '../logic/clues';
 import { checklist } from '../logic/days';
 import type { DialogueNode } from '../logic/dialogue';
 import type { GameState } from '../logic/gameState';
+import { AccusationPanel } from './accusationPanel';
 import { DeductionBoard } from './deductionBoard';
 import { DialogueBox } from './dialogueBox';
 import { Toaster } from './toast';
@@ -12,6 +13,7 @@ import { Toaster } from './toast';
 export class Overlays {
   private readonly dialogue: DialogueBox;
   private readonly board: DeductionBoard;
+  private readonly accusation: AccusationPanel;
   private readonly toaster: Toaster;
   private readonly where: HTMLElement;
   private readonly todo: HTMLElement;
@@ -42,8 +44,11 @@ export class Overlays {
     root.appendChild(this.todo);
 
     this.toaster = new Toaster(root);
-    this.dialogue = new DialogueBox(root, state, content.dialogue, content.clues, (text) => this.toast(text));
+    this.dialogue = new DialogueBox(root, state, content.dialogue, content.clues, (text) => this.toast(text), (action) => {
+      if (action === 'accuse') this.accusation.open();
+    });
     this.board = new DeductionBoard(root, state, content.people, (text) => this.toast(text));
+    this.accusation = new AccusationPanel(root, state, content.people, (text) => this.toast(text));
     this.card = this.buildDayCard(root);
 
     state.onChange(() => {
@@ -54,7 +59,7 @@ export class Overlays {
 
   /** True while an overlay should stop the player from walking or interacting. */
   isBlocking(): boolean {
-    return this.dialogue.isOpen || this.board.isOpen || !this.card.hidden;
+    return this.dialogue.isOpen || this.board.isOpen || this.accusation.isOpen || !this.card.hidden;
   }
 
   isDialogueOpen(): boolean {
@@ -78,7 +83,7 @@ export class Overlays {
 
   /** Opens or closes the board. Does nothing mid-conversation or while the day card is up. */
   toggleBoard(): void {
-    if (this.dialogue.isOpen || !this.card.hidden) return;
+    if (this.dialogue.isOpen || this.accusation.isOpen || !this.card.hidden) return;
     if (this.board.isOpen) this.board.close();
     else this.board.open();
   }
@@ -86,6 +91,7 @@ export class Overlays {
   closeAll(): void {
     this.dialogue.close();
     this.board.close();
+    this.accusation.close();
   }
 
   toast(text: string): void {
@@ -141,7 +147,8 @@ export class Overlays {
     const items = spec ? checklist(spec.objectives, this.state.flags) : [];
     const allDone = items.length > 0 && items.every((i) => i.done);
     const heading = document.createElement('h3');
-    heading.textContent = allDone ? 'Today: done. Head back to KTDI (south path).' : 'Today';
+    const last = this.state.day >= LAST_DAY;
+    heading.textContent = !allDone ? 'Today' : last ? 'Today: done. The case is closed.' : 'Today: done. Head back to KTDI (south path).';
     const list = document.createElement('ul');
     for (const item of items) {
       const li = document.createElement('li');
@@ -156,10 +163,8 @@ export class Overlays {
     const day = this.state.day;
     if (this.announcedDays.has(day) || !this.state.isDayComplete()) return;
     this.announcedDays.add(day);
-    const text =
-      day >= LAST_DAY
-        ? `Day ${day} complete. That's the whole story so far — more days are coming.`
-        : `Day ${day} complete. Head back to KTDI down the south path when you're ready.`;
+    if (day >= LAST_DAY) return; // the ending screen takes over
+    const text = `Day ${day} complete. Head back to KTDI down the south path when you're ready.`;
     // Let the link's own message show first.
     window.setTimeout(() => this.toaster.show(text, 5000), 700);
   }

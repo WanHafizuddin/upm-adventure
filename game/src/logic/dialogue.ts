@@ -6,6 +6,8 @@ export interface DialogueChoice {
   next: string | null;
   /** If set, the choice can only be picked while the player holds this clue. */
   requiresClue?: string;
+  /** Something the game does instead of following `next` (used to open the final accusation). */
+  action?: 'accuse';
 }
 
 export interface DialogueNode {

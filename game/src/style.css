@@ -433,3 +433,175 @@ body {
   color: var(--good);
   opacity: 0.8;
 }
+
+/* --- Final accusation --- */
+
+.accuse {
+  inset: 48px 32px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 18px 24px;
+  overflow-y: auto;
+  border-top: 3px solid var(--upm-red);
+}
+
+.accuse header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.accuse h2 {
+  margin: 0;
+  font: italic 26px var(--serif);
+  color: var(--amber);
+}
+
+.accuse h3 {
+  margin: 10px 0 4px;
+  font: 15px var(--sans);
+  color: var(--ink);
+}
+
+.accuse .count {
+  color: var(--muted);
+}
+
+.accuse-suspects,
+.accuse-evidence {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.accuse button {
+  font: 15px var(--sans);
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--edge);
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.accuse button:hover:not(:disabled) {
+  border-color: var(--amber);
+}
+
+.accuse button:disabled {
+  color: #5d6170;
+  cursor: not-allowed;
+}
+
+.accuse-suspect {
+  flex: 1 1 180px;
+  text-align: left;
+}
+
+.accuse-suspect strong {
+  display: block;
+  font: 17px var(--serif);
+}
+
+.accuse-suspect small {
+  color: var(--muted);
+}
+
+.accuse button.chosen {
+  border-color: var(--upm-red);
+  background: rgba(181, 18, 27, 0.25);
+}
+
+.accuse-detail {
+  min-height: 2.6em;
+  margin: 6px 0 0;
+  font: 14px/1.4 var(--serif);
+  color: var(--muted);
+}
+
+.accuse .accuse-go {
+  align-self: flex-start;
+  margin-top: 6px;
+  padding: 10px 28px;
+  font: 600 16px var(--sans);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: var(--upm-red);
+  border-color: var(--upm-red);
+  color: #fff;
+}
+
+.accuse .accuse-go:disabled {
+  background: rgba(181, 18, 27, 0.25);
+  color: #b9a9ab;
+}
+
+/* --- Ending screen --- */
+
+.endcard {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  pointer-events: auto;
+  background: rgba(5, 4, 10, 0.96);
+  animation: card-in 0.8s ease-out;
+}
+
+.endcard-inner {
+  max-width: 640px;
+  padding: 24px;
+  text-align: center;
+}
+
+.end-kicker {
+  margin: 0;
+  font: italic 15px var(--serif);
+  color: var(--muted);
+}
+
+.endcard h1 {
+  margin: 8px 0 18px;
+  padding-bottom: 14px;
+  border-bottom: 2px solid var(--upm-red);
+  font: 48px var(--serif);
+  color: #fff;
+}
+
+.end-text {
+  margin: 0 0 14px;
+  font: 18px/1.6 var(--serif);
+  color: var(--ink);
+}
+
+.end-missing {
+  margin: 0 0 10px;
+  font-size: 15px;
+  color: var(--amber);
+}
+
+.end-evidence {
+  margin: 0 0 22px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.end-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.end-buttons button {
+  padding: 10px 20px;
+  font: 15px var(--sans);
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--edge);
+  cursor: pointer;
+}
+
+.end-buttons button:hover {
+  border-color: var(--amber);
+}

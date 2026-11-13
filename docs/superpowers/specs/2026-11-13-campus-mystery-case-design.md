@@ -55,7 +55,7 @@ Clues marked ★ are needed to prove the case. The others are red herrings or co
 | 3 | Pre-signed Logbook ★ | Lab 2 | The 10:00 and 10:30 signatures are identical, written in one go |
 | 3 | Rosli's Audit Notes ★ | Rosli's office | Reagent missing from stores; meeting with the Dean booked for the morning |
 | 3 | Video Call Record | Priya's office | Call ran 9:58–11:02 (clears Priya) |
-| 4 | Toxicology Report ★ | Delivered by the police | The poison matches the reagent missing from the Lab 2 stores |
+| 4 | Toxicology Report ★ | Inspektor Aziz, in the courtyard | The poison matches the reagent missing from the Lab 2 stores |
 
 ## Deduction board links
 
@@ -75,8 +75,8 @@ Later days add links such as Library Gate Log ↔ Farah's Alibi (Farah cleared),
 - **Day 1 (built):** meet all three suspects (`met_farah`, `met_daniel`, `met_priya`), examine the crime scene (`examined_scene`), and work out how he died (`linked_tumbler_to_victim`).
 - **Day 2 (built):** PSAS (Puan Lim, librarian on night duty), the security office (Encik Rahman, the guard who found him) and the Fakulti Sains ground floor (Kak Ani, the cleaner). Goals: meet all three (`met_librarian`, `met_guard`, `met_cleaner`) and clear Farah (`farah_cleared`). Day 2 links: Library Gate Log ↔ Farah's Alibi, Door Access Log ↔ Lab Access Card, Door Access Log ↔ Daniel's Alibi, Cleaner's Statement ↔ Coffee Tumbler.
 - **Day 3 (built):** Makmal 2 (Daniel is there), Fakulti Sains Aras 1, Dr. Rosli's office and Dr. Priya's office (she is there). Goals: read the logbook (`examined_logbook`), search Rosli's office (`examined_rosli_office`), ask Priya about her call (`checked_priya_call`), and on the board break Daniel's alibi (`daniel_alibi_broken`: Pre-signed Logbook ↔ Daniel's Alibi) and clear Priya (`priya_cleared`: Video Call Record ↔ The Argument). Optional: Rosli's Audit Notes ↔ Daniel (`daniel_motive`).
-- **Day 4:** toxicology arrives. Confront each suspect with evidence.
-- **Day 5:** accusation.
+- **Day 4 (built):** Inspektor Aziz brings the toxicology report. Match the poison to the stores on the board (Toxicology Report ↔ Rosli's Audit Notes) and confront Daniel in Makmal 2 with the report.
+- **Day 5 (built):** everyone gathers in the courtyard; tell Inspektor Aziz you're ready, then choose the killer and exactly three pieces of evidence.
 
 ## Endings
 

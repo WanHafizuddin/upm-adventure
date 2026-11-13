@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
+import { judgeAccusation } from '../logic/accusation';
 import { availableOn } from '../logic/days';
 import { GameState } from '../logic/gameState';
-import { CLUES, LINKS, LOOKS, PEOPLE } from './case';
+import { ACCUSATION, CLUES, LINKS, LOOKS, PEOPLE } from './case';
 import { DIALOGUE } from './dialogue';
 import { DAYS, DAY_GOALS } from './days';
 import { LOCATIONS, type LocationSpec } from './locations';
@@ -109,6 +110,12 @@ describe('story content', () => {
     }
   });
 
+  it('builds the accusation from real clues and a real suspect', () => {
+    expect(PEOPLE.find((p) => p.id === ACCUSATION.culprit)?.kind).toBe('Suspect');
+    for (const group of ACCUSATION.groups) for (const id of group.clues) expect(isClue(id), id).toBe(true);
+    expect(ACCUSATION.groups.length).toBeLessThanOrEqual(ACCUSATION.evidenceNeeded);
+  });
+
   it('makes every clue obtainable on some day', () => {
     const all = new Set(DAYS.flatMap((d) => [...obtainableOn(d.day)]));
     for (const id of Object.keys(CLUES)) expect(all.has(id), id).toBe(true);
@@ -151,6 +158,12 @@ describe('story content', () => {
       for (const link of LINKS) {
         const held = (id: string) => !isClue(id) || state.inventory.has(id);
         if (held(link.clueId) && held(link.targetId)) state.connect(link.targetId, link.clueId);
+      }
+      // The final day is won by the accusation: build the best case from the clues held.
+      if (day.objectives.some((o) => o.flag === 'accused')) {
+        const evidence = ACCUSATION.groups.map((g) => g.clues.find((c) => state.inventory.has(c)) ?? '');
+        expect(judgeAccusation(ACCUSATION.culprit, evidence, ACCUSATION).ending, 'a winning accusation').toBe('true');
+        state.setFlag('accused');
       }
       expect(state.isDayComplete(), `day ${day.day} complete`).toBe(true);
       state.advanceDay();

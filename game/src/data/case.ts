@@ -1,4 +1,5 @@
 import type { Look } from '../art/look';
+import type { AccusationRules, Ending } from '../logic/accusation';
 import type { Clue } from '../logic/clues';
 import type { DeductionLink } from '../logic/deduction';
 
@@ -72,6 +73,13 @@ export const CLUES: Readonly<Record<string, Clue>> = {
     name: 'Video Call Record',
     description: "Priya's office computer: a video call with Melbourne from 9:58 pm to 11:02 pm.",
   },
+  // Day 4
+  toxicology_report: {
+    id: 'toxicology_report',
+    name: 'Toxicology Report',
+    description:
+      "The police lab found a toxic reagent in Dr. Rosli's coffee — the same one listed as missing from the Makmal 2 stores.",
+  },
 };
 
 export interface Person {
@@ -99,6 +107,7 @@ export const LOOKS: Readonly<Record<string, Look>> = {
   lim: { hair: 0x9a9aa6, glasses: true, top: 0x4f7a5a, bottom: 0x3a3548, shoes: 0x2b2224 },
   rahman: { hair: 0x15121c, top: 0x2a3c66, bottom: 0x1f2433, shoes: 0x15131a },
   ani: { hair: 0x1d1727, tudung: 0x3f8a86, top: 0x7d93a8, bottom: 0x3a4152, shoes: 0x2b2224 },
+  aziz: { hair: 0x15121c, top: 0x1f2f5a, bottom: 0x1a2240, shoes: 0x111018 },
 };
 
 export const LINKS: readonly DeductionLink[] = [
@@ -171,4 +180,49 @@ export const LINKS: readonly DeductionLink[] = [
     unlockFlags: ['daniel_motive'],
     insight: 'Dr. Rosli was about to report Daniel for stealing from the stores. That is a motive.',
   },
+  // Day 4
+  {
+    clueId: 'toxicology_report',
+    targetId: 'audit_notes',
+    unlockFlags: ['poison_from_stores'],
+    insight: 'The poison is the reagent that went missing from the Makmal 2 stores.',
+  },
+  {
+    clueId: 'toxicology_report',
+    targetId: 'coffee_tumbler',
+    unlockFlags: ['poison_in_coffee'],
+    insight: 'Confirmed: the reagent was in his coffee.',
+  },
 ];
+
+/** What the final accusation has to prove. Each group is covered by any one of its clues. */
+export const ACCUSATION: AccusationRules = {
+  culprit: 'daniel',
+  evidenceNeeded: 3,
+  groups: [
+    { name: 'opportunity', clues: ['door_access_log', 'presigned_logbook'] },
+    { name: 'means', clues: ['toxicology_report', 'cleaner_statement'] },
+    { name: 'motive', clues: ['audit_notes'] },
+  ],
+};
+
+export interface EndingText {
+  title: string;
+  text: string;
+}
+
+/** The ending screens. In `wrong`, {name} is replaced with the accused person's name. */
+export const ENDINGS: Readonly<Record<Exclude<Ending, 'not_ready'>, EndingText>> = {
+  true: {
+    title: 'Case Closed',
+    text: "The door log, the forged logbook, the toxicology report and Dr. Rosli's own audit: laid side by side, Daniel Wong's story falls apart. He is charged with murder before the week is out. Farah's samples are re-run with clean stock, and her results were right all along. A month later, a small plaque appears beside the Fakulti Sains fountain. Someone keeps leaving a steel tumbler of coffee there.",
+  },
+  unproven: {
+    title: 'Right, But Unproven',
+    text: "You named the right man. You know it, Inspektor Aziz knows it, and Daniel Wong knows it too. But your evidence leaves a gap, and his lawyer drives a lorry through it. Daniel walks out of the station that night, and he smiles at you on his way past.",
+  },
+  wrong: {
+    title: 'The Wrong Person',
+    text: "You named {name}. The police take it seriously, for a while. Then the alibi holds, the questions dry up, and the case goes cold. Somewhere in Fakulti Sains, the real killer quietly tidies up the stores.",
+  },
+};
