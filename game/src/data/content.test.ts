@@ -81,6 +81,13 @@ describe('story content', () => {
     }
   });
 
+  it('gives every board link a lead and an insight, so the board can say what to look for', () => {
+    for (const link of LINKS) {
+      expect(link.lead, `${link.clueId}–${link.targetId}`).toBeTruthy();
+      expect(link.insight, `${link.clueId}–${link.targetId}`).toBeTruthy();
+    }
+  });
+
   it('gives every character a look and every conversation a real start', () => {
     for (const loc of locations) {
       for (const npc of loc.npcs) {

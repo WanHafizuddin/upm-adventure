@@ -42,6 +42,28 @@ describe('DeductionValidator', () => {
     expect(validator.isConnected('suspect_a', 'torn_note')).toBe(true);
   });
 
+  describe('open and made links', () => {
+    const board = [
+      { clueId: 'torn_note', targetId: 'suspect_a', unlockFlags: [] },
+      { clueId: 'gate_log', targetId: 'alibi', unlockFlags: [] },
+      { clueId: 'gate_log', targetId: 'suspect_a', unlockFlags: [] },
+    ];
+
+    it('lists only links whose two cards are both on the board', () => {
+      const validator = new DeductionValidator(board);
+      const open = validator.openLinks(new Set(['torn_note', 'gate_log', 'suspect_a']));
+      expect(open.map((l) => `${l.clueId}-${l.targetId}`)).toEqual(['torn_note-suspect_a', 'gate_log-suspect_a']);
+    });
+
+    it('moves a link from open to made once it is connected', () => {
+      const validator = new DeductionValidator(board);
+      const present = new Set(['torn_note', 'gate_log', 'alibi', 'suspect_a']);
+      validator.tryConnect('alibi', 'gate_log');
+      expect(validator.openLinks(present)).toHaveLength(2);
+      expect(validator.madeLinks().map((l) => l.targetId)).toEqual(['alibi']);
+    });
+  });
+
   it('can list its made links and restore them into a fresh validator', () => {
     const first = new DeductionValidator(links);
     first.tryConnect('torn_note', 'suspect_a');

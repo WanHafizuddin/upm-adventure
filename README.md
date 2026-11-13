@@ -2,6 +2,10 @@
 
 A top-down pixel-art murder mystery set at Universiti Putra Malaysia (UPM), Serdang, at night. You play a student sleuth looking into the death of a lecturer: explore the campus, question suspects, collect clues, and link the evidence on a deduction board before making an accusation.
 
+### ▶ [Play it now in your browser](https://upm-adventure-theta.vercel.app)
+
+No install needed. Works best on a desktop or laptop with a keyboard.
+
 A fan-made game: every character and event is fictional, and it is not an official UPM production.
 
 ## Status
@@ -12,7 +16,7 @@ A fan-made game: every character and event is fictional, and it is not an offici
 - three suspects to question (a PhD student, the lab manager and a rival lecturer), each with their own story and alibi
 - six clues: two to find on the ground, one from examining the crime scene, three from what the suspects tell you
 - some questions only open up once you're holding the right clue
-- a deduction board where linking clues to people reveals what they mean
+- a deduction board with a "Leads" list that says which cards to compare: click a clue, then the card it connects to, and you learn what it means
 - Day 1 ends once you've met everyone, examined the scene and worked out how he died; then you head back to KTDI
 - Day 2 opens PSAS, the security office and the Fakulti Sains ground floor, with three new witnesses, three new clues and the evidence that clears one suspect
 - Day 3 opens Makmal 2 and the upstairs offices: a suspicious logbook, the victim's audit notes and a call record that settle who's lying
@@ -37,7 +41,7 @@ npm run dev
 
 Then open http://localhost:5173.
 
-**Controls:** WASD or arrow keys to move · E to interact · Tab for the deduction board · 1–4 to pick a reply · Esc to close · M to mute
+**Controls:** WASD or arrow keys to move · E to interact · Tab for the deduction board (click a card, then the card it connects to) · 1–4 to pick a reply · Esc to close · M to mute
 
 ## Put it online (Vercel)
 
@@ -46,7 +50,7 @@ The game is a static site, so it runs on Vercel's free plan. `game/vercel.json` 
 1. Sign in at [vercel.com](https://vercel.com) with GitHub.
 2. **Add New → Project** and pick this repository.
 3. Make sure **Root Directory** is `game` (Vercel usually fills this in for you), then click **Deploy**.
-4. Share the link Vercel gives you, e.g. `https://upm-adventure.vercel.app`.
+4. Share the link Vercel gives you. This repo's live copy is at https://upm-adventure-theta.vercel.app.
 
 Every push to `master` redeploys automatically.
 

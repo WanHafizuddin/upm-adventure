@@ -19,7 +19,7 @@ WASD or arrows move · E interact · Tab deduction board · 1–4 pick a reply �
 ## Where things live
 
 - `src/logic/` — game rules (inventory, flags, dialogue, deduction, days). Plain TypeScript, no Phaser, each with a `.test.ts`.
-- `src/data/` — the story as data: `case.ts` (clues, people, looks, board links), `dialogue.ts`, `days.ts` (each day's goals and title card), `locations.ts` (every place, who's there on which day, exits, furniture, signs). `content.test.ts` plays every day through and catches dead ends.
+- `src/data/` — the story as data: `case.ts` (clues, people, looks, board links and the lead question each link shows on the board), `dialogue.ts`, `days.ts` (each day's goals and title card), `locations.ts` (every place, who's there on which day, exits, furniture, signs). `content.test.ts` plays every day through and catches dead ends.
 - `src/scenes/` — `WorldScene.ts` (walking, talking, clues, exits), `CourtyardScene.ts`, `RoomScene.ts` (any indoor room from data), `BootScene.ts`.
 - `src/art/` — all pixel art, generated in code: courtyard (`sprites.ts`), rooms and furniture (`interiors.ts`), UPM signage and the pixel font (`signage.ts`, `pixelFont.ts`).
 - `src/save.ts` — auto-save to the browser (`localStorage`) and the Continue menu's data.

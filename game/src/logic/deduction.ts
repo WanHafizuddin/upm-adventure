@@ -5,6 +5,8 @@ export interface DeductionLink {
   unlockFlags: string[];
   /** What the player learns from making this link, shown when they make it. */
   insight?: string;
+  /** A question shown on the board while the link is still to be made, saying what to look for. */
+  lead?: string;
 }
 
 export interface ConnectionResult {
@@ -37,6 +39,18 @@ export class DeductionValidator {
 
   isConnected(a: string, b: string): boolean {
     return this.made.has(pairKey(a, b));
+  }
+
+  /** Links not made yet whose two cards are both in `present`, in solution order. */
+  openLinks(present: ReadonlySet<string>): DeductionLink[] {
+    return this.links.filter(
+      (l) => present.has(l.clueId) && present.has(l.targetId) && !this.made.has(pairKey(l.clueId, l.targetId)),
+    );
+  }
+
+  /** Links made so far, in solution order. */
+  madeLinks(): DeductionLink[] {
+    return this.links.filter((l) => this.made.has(pairKey(l.clueId, l.targetId)));
   }
 
   /** Links made so far, as opaque keys, e.g. for saving. */

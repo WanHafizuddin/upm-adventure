@@ -159,11 +159,100 @@ body {
   color: var(--amber);
 }
 
+.board-body {
+  display: flex;
+  flex: 1 0 auto;
+  gap: 20px;
+  margin-top: 12px;
+}
+
 .board-area {
   position: relative;
-  flex: 1 0 auto;
-  margin-top: 12px;
+  flex: 1 1 auto;
   user-select: none;
+}
+
+.board-leads {
+  flex: 0 0 290px;
+  align-self: flex-start;
+  padding: 10px 14px 12px;
+  border: 1px solid var(--edge);
+  background: rgba(0, 0, 0, 0.22);
+  font: 14px/1.35 var(--serif);
+}
+
+.board-leads h3 {
+  margin: 0 0 6px;
+  font: 12px var(--sans);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--amber);
+}
+
+.board-leads h3.leads-made-title {
+  margin-top: 14px;
+  color: var(--good);
+}
+
+.board-leads ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 6px;
+}
+
+.board-leads li {
+  padding-left: 18px;
+  text-indent: -18px;
+}
+
+.board-leads li.lead {
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.board-leads li.lead::before {
+  content: '?';
+  display: inline-block;
+  width: 18px;
+  text-indent: 0;
+  color: var(--amber);
+  font-weight: bold;
+}
+
+.board-leads li.lead:hover {
+  color: var(--amber);
+}
+
+.board-leads .leads-made li {
+  color: var(--muted);
+}
+
+.board-leads .leads-made li::before {
+  content: '✓';
+  display: inline-block;
+  width: 18px;
+  text-indent: 0;
+  color: var(--good);
+}
+
+.board-leads li.none {
+  padding-left: 0;
+  text-indent: 0;
+  font-style: italic;
+  color: var(--muted);
+}
+
+@media (max-width: 900px) {
+  .board-body {
+    flex-direction: column;
+  }
+
+  .board-leads {
+    flex-basis: auto;
+    align-self: stretch;
+  }
 }
 
 .board-lines {
@@ -264,6 +353,38 @@ body {
 .card.connected {
   border-color: var(--good);
   box-shadow: 0 0 0 2px var(--good), 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+/* Nothing left to connect on this card for now. */
+.card.idle {
+  opacity: 0.5;
+}
+
+.card.hinted,
+.card.selected {
+  opacity: 1;
+  outline: 3px solid var(--amber);
+  outline-offset: 2px;
+}
+
+.card.selected {
+  transform: translateY(-2px);
+}
+
+/* How many open leads this card is part of. */
+.card .badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 5px;
+  border-radius: 11px;
+  background: var(--amber);
+  color: #22201b;
+  font: bold 13px/22px var(--sans);
+  text-align: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
 }
 
 /* --- Toasts --- */
