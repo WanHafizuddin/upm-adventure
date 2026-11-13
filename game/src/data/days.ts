@@ -1,3 +1,4 @@
+import type { Objective } from '../logic/days';
 import type { Facing } from '../logic/movement';
 
 /** Where and how the player appears in a location. */
@@ -13,8 +14,8 @@ export interface DaySpec {
   /** Shown on the title card under "Day N". */
   subtitle: string;
   time: 'Night' | 'Evening';
-  /** Flags that finish the day. */
-  goals: readonly string[];
+  /** What finishes the day, in the words shown on the HUD's checklist. */
+  objectives: readonly Objective[];
   /** One line on the title card telling the player what today is about. */
   hint: string;
   start: Spawn;
@@ -28,7 +29,13 @@ export const DAYS: readonly DaySpec[] = [
     day: 1,
     subtitle: 'The night it happened',
     time: 'Night',
-    goals: ['met_farah', 'met_daniel', 'met_priya', 'examined_scene', 'linked_tumbler_to_victim'],
+    objectives: [
+      { flag: 'met_farah', text: 'Talk to Farah' },
+      { flag: 'met_daniel', text: 'Talk to Daniel' },
+      { flag: 'met_priya', text: 'Talk to Dr. Priya' },
+      { flag: 'examined_scene', text: 'Examine the crime scene' },
+      { flag: 'linked_tumbler_to_victim', text: 'Board (Tab): work out how Dr. Rosli died' },
+    ],
     hint: 'Talk to everyone in the courtyard, examine the scene, and work out how Dr. Rosli died.',
     start: COURTYARD_START,
   },
@@ -36,13 +43,20 @@ export const DAYS: readonly DaySpec[] = [
     day: 2,
     subtitle: 'The next evening',
     time: 'Evening',
-    goals: ['met_librarian', 'met_guard', 'met_cleaner', 'farah_cleared'],
+    objectives: [
+      { flag: 'met_librarian', text: 'Talk to the librarian at PSAS (west path)' },
+      { flag: 'met_guard', text: 'Talk to the guard at the security office (east path)' },
+      { flag: 'met_cleaner', text: 'Talk to the cleaner inside Fakulti Sains' },
+      { flag: 'farah_cleared', text: "Board (Tab): check Farah's alibi against the library's records" },
+    ],
     hint: "The library, the security office and the faculty are open again. Check everyone's story.",
     start: COURTYARD_START,
   },
 ];
 
-export const DAY_GOALS: Readonly<Record<number, readonly string[]>> = Object.fromEntries(DAYS.map((d) => [d.day, d.goals]));
+export const DAY_GOALS: Readonly<Record<number, readonly string[]>> = Object.fromEntries(
+  DAYS.map((d) => [d.day, d.objectives.map((o) => o.flag)]),
+);
 
 export const LAST_DAY = DAYS[DAYS.length - 1].day;
 

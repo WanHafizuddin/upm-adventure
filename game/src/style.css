@@ -270,7 +270,8 @@ body {
 
 .toasts {
   position: absolute;
-  top: 44px;
+  /* Below the "Today" checklist in the top-left, so the two never overlap. */
+  top: 172px;
   left: 50%;
   transform: translateX(-50%);
   display: grid;
@@ -399,4 +400,36 @@ body {
   50% {
     opacity: 0.45;
   }
+}
+
+/* --- Today's checklist --- */
+
+.todo {
+  position: absolute;
+  top: 38px;
+  left: 16px;
+  max-width: min(340px, 42vw);
+  padding: 8px 12px 9px;
+  background: rgba(10, 11, 17, 0.72);
+  border-left: 3px solid var(--upm-red);
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--ink);
+}
+
+.todo h3 {
+  margin: 0 0 4px;
+  font: italic 14px var(--serif);
+  color: var(--amber);
+}
+
+.todo ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.todo li.done {
+  color: var(--good);
+  opacity: 0.8;
 }

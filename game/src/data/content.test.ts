@@ -118,7 +118,7 @@ describe('story content', () => {
     for (const day of DAYS) {
       const obtainable = obtainableOn(day.day);
       for (const link of LINKS) {
-        if (!link.unlockFlags.some((f) => day.goals.includes(f))) continue;
+        if (!link.unlockFlags.some((f) => day.objectives.some((o) => o.flag === f))) continue;
         for (const end of [link.clueId, link.targetId].filter(isClue)) {
           expect(obtainable.has(end), `day ${day.day} needs ${end}`).toBe(true);
         }

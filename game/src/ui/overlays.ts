@@ -1,6 +1,7 @@
 import type { Person } from '../data/case';
 import { LAST_DAY, daySpec, type DaySpec } from '../data/days';
 import type { Clue } from '../logic/clues';
+import { checklist } from '../logic/days';
 import type { DialogueNode } from '../logic/dialogue';
 import type { GameState } from '../logic/gameState';
 import { DeductionBoard } from './deductionBoard';
@@ -13,6 +14,7 @@ export class Overlays {
   private readonly board: DeductionBoard;
   private readonly toaster: Toaster;
   private readonly where: HTMLElement;
+  private readonly todo: HTMLElement;
   private readonly card: HTMLElement;
   private place = '';
   private readonly announcedDays = new Set<number>();
@@ -33,6 +35,11 @@ export class Overlays {
       <span class="keys">WASD move · E interact · Tab board</span>`;
     this.where = hud.querySelector('.where')!;
     root.appendChild(hud);
+
+    // The day's to-do list, always on screen, so the player knows what's left.
+    this.todo = document.createElement('section');
+    this.todo.className = 'todo';
+    root.appendChild(this.todo);
 
     this.toaster = new Toaster(root);
     this.dialogue = new DialogueBox(root, state, content.dialogue, content.clues, (text) => this.toast(text));
@@ -130,6 +137,19 @@ export class Overlays {
   private updateHud(): void {
     const spec = daySpec(this.state.day);
     this.where.textContent = `Day ${this.state.day} · ${this.place} · ${spec?.time ?? ''}`;
+
+    const items = spec ? checklist(spec.objectives, this.state.flags) : [];
+    const allDone = items.length > 0 && items.every((i) => i.done);
+    const heading = document.createElement('h3');
+    heading.textContent = allDone ? 'Today: done. Head back to KTDI (south path).' : 'Today';
+    const list = document.createElement('ul');
+    for (const item of items) {
+      const li = document.createElement('li');
+      li.className = item.done ? 'done' : '';
+      li.textContent = `${item.done ? '✓' : '○'} ${item.text}`;
+      list.appendChild(li);
+    }
+    this.todo.replaceChildren(heading, list);
   }
 
   private checkDayComplete(): void {
